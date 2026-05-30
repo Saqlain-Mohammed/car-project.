@@ -1,48 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --dark:    #2B2D42;
-  --steel:   #8D99AE;
-  --light:   #EDF2F4;
-  --red:     #EF233C;
-  --red-dim: #c01a2f;
-  --black:   #1a1b26;
-  --card:    #23253a;
-  --muted:   #8D99AE;
-  --white:   #EDF2F4;
-  --grid-line: rgba(237,242,244,0.03);
+  --navy:    #2D3142;
+  --slate:   #4F5D75;
+  --grey:    #BFC0C0;
+  --coral:   #EF8354;
+  --coral-dim: #d96a3a;
+  --white:   #FFFFFF;
 
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-heading: 'Barlow Condensed', sans-serif;
-  --font-body:    'Barlow', sans-serif;
+  --bg:        #1f2230;
+  --bg-alt:    #2D3142;
+  --surface:   #2a2f40;
+  --surface-2: #353b50;
+  --border:    rgba(191,192,192,0.12);
+  --border-bright: rgba(191,192,192,0.22);
+  --text:      #EDEEF0;
+  --text-soft: #BFC0C0;
+  --text-muted:#8b90a0;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Inter', sans-serif;
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--dark);
-  color: var(--light);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-body);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-line) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-line) 40px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--dark); }
-::-webkit-scrollbar-thumb { background: var(--red); border-radius: 0; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--coral); }
 
 @keyframes speedLines {
   from { transform: translateX(0); }
@@ -57,10 +53,6 @@ body::before {
   50%       { opacity: 1; }
 }
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(28px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeLeft {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
 }
