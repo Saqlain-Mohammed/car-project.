@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useDeferredValue } from 'react'
+import { useVehicleCatalog, useMaintenanceGuides, useNews } from '../../hooks/useKnowledge'
+import { RowSkeleton } from '../ui/Skeleton'
 
 const C = {
   navy:'#2D3142', slate:'#4F5D75', grey:'#BFC0C0', coral:'#EF8354', coralDim:'#d96a3a',
@@ -38,8 +40,30 @@ export default function KnowledgePage() {
   const [activeTab, setActiveTab] = useState('specs')
   const [search, setSearch] = useState('')
   const [selectedCar, setSelectedCar] = useState(null)
+  const deferredSearch = useDeferredValue(search)
 
-  const filtered = CAR_DB.filter(c =>
+  const { data: dbCatalog, isLoading: loadingCatalog } = useVehicleCatalog(
+    deferredSearch ? { make: deferredSearch } : {}
+  )
+  const { data: dbGuides, isLoading: loadingGuides } = useMaintenanceGuides()
+  const { data: dbNews,   isLoading: loadingNews   } = useNews()
+
+  // Use DB data when available, else fall back to built-in mock data
+  const catalogData = (dbCatalog && dbCatalog.length > 0)
+    ? dbCatalog.map(r => ({ id: r.id, make: r.make, model: r.model, variant: r.trim || '', year: String(r.year), engine: r.engine || '—', power: r.horsepower ? `${r.horsepower}hp` : '—', torque: r.torque_nm ? `${r.torque_nm}Nm` : '—', weight: r.weight_kg ? `${r.weight_kg}kg` : '—', drivetrain: r.drivetrain || '—', emoji: r.type === 'motorcycle' ? '🏍️' : '🚗' }))
+    : CAR_DB
+
+  const guidesData = (dbGuides && dbGuides.length > 0)
+    ? dbGuides.map(r => ({ id: r.id, title: r.title, category: r.category, readTime: '5 min', emoji: '🔧', difficulty: r.difficulty }))
+    : GUIDES
+
+  const newsData = (dbNews && dbNews.length > 0)
+    ? dbNews.map(r => ({ title: r.title, tag: r.category || 'News', time: new Date(r.published_at).toLocaleDateString(), emoji: '📰', hot: false }))
+    : NEWS
+
+  const isLoading = activeTab === 'specs' ? loadingCatalog : activeTab === 'guides' ? loadingGuides : loadingNews
+
+  const filtered = catalogData.filter(c =>
     search === '' ||
     c.make.toLowerCase().includes(search.toLowerCase()) ||
     c.model.toLowerCase().includes(search.toLowerCase())
@@ -77,7 +101,9 @@ export default function KnowledgePage() {
 
             <div style={{ display:'grid', gridTemplateColumns: selectedCar ? '1fr 400px' : '1fr', gap:'1.5rem', alignItems:'start' }}>
               <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                {filtered.map(car => (
+                {loadingCatalog
+                  ? Array.from({length:5}).map((_,i) => <RowSkeleton key={i} />)
+                  : filtered.map(car => (
                   <div key={car.id} onClick={() => setSelectedCar(selectedCar?.id === car.id ? null : car)}
                     style={{ background: selectedCar?.id===car.id ? C.surface2 : C.surface, borderRadius:14, padding:'1.25rem 1.5rem', display:'flex', gap:'1.25rem', alignItems:'center', cursor:'pointer', border:`1px solid ${selectedCar?.id===car.id ? 'rgba(239,131,84,0.4)' : C.border}`, transition:'all 0.2s' }}
                     onMouseEnter={e => { if (selectedCar?.id!==car.id) e.currentTarget.style.background=C.surface2 }}
@@ -93,6 +119,9 @@ export default function KnowledgePage() {
                     </div>
                   </div>
                 ))}
+                {!loadingCatalog && filtered.length === 0 && (
+                  <div style={{ textAlign:'center', padding:'3rem', color:C.textMuted, fontFamily:D.body }}>No vehicles found. Try a different search.</div>
+                )}
               </div>
 
               {selectedCar && (
@@ -121,7 +150,9 @@ export default function KnowledgePage() {
 
         {activeTab === 'guides' && (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'1.25rem' }}>
-            {GUIDES.map(g => (
+            {loadingGuides
+              ? Array.from({length:6}).map((_,i) => <RowSkeleton key={i} />)
+              : guidesData.map(g => (
               <div key={g.id} style={{ background:C.surface, borderRadius:16, padding:'1.75rem', cursor:'pointer', border:`1px solid ${C.border}`, transition:'all 0.2s' }}
                 onMouseEnter={e => { e.currentTarget.style.background=C.surface2; e.currentTarget.style.transform='translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.background=C.surface; e.currentTarget.style.transform='translateY(0)' }}>
@@ -139,7 +170,9 @@ export default function KnowledgePage() {
 
         {activeTab === 'news' && (
           <div style={{ display:'flex', flexDirection:'column', gap:'0.85rem' }}>
-            {NEWS.map(n => (
+            {loadingNews
+              ? Array.from({length:4}).map((_,i) => <RowSkeleton key={i} />)
+              : newsData.map(n => (
               <div key={n.title} style={{ background:C.surface, borderRadius:14, padding:'1.25rem 1.5rem', display:'flex', gap:'1.25rem', alignItems:'center', cursor:'pointer', border:`1px solid ${C.border}`, transition:'all 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background=C.surface2}
                 onMouseLeave={e => e.currentTarget.style.background=C.surface}>

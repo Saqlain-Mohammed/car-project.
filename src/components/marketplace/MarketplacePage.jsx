@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useVehicleListings, usePartsListings, useCreateVehicleListing, useCreatePartsListing, useSendEnquiry } from '../../hooks/useMarketplace'
+import { CardSkeleton } from '../ui/Skeleton'
 
 const C = {
   bg:'#1f2230', surface:'#2a2f40', surface2:'#353b50', navy:'#2D3142',
@@ -174,11 +176,30 @@ function PostListingModal({ onClose, defaultTab }) {
   const [tab, setTab] = useState(defaultTab || 'vehicle')
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  const [files, setFiles] = useState([])
+  const fileRef = useRef()
   const [form, setForm] = useState({
     make:'', model:'', year:'', km:'', price:'', location:'', condition:'', transmission:'', fuel:'', desc:'', contact:'',
     partName:'', category:'', compatible:'', partCondition:'', partPrice:'', partLocation:'', partDesc:'', partContact:'',
   })
   const u = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const createVehicle = useCreateVehicleListing()
+  const createPart    = useCreatePartsListing()
+
+  const handleSubmit = async () => {
+    if (tab === 'vehicle') {
+      await createVehicle.mutateAsync({
+        listing: { make: form.make, model: form.model, year: Number(form.year), mileage_km: Number(form.km), price: Number(form.price), location: form.location, condition: form.condition?.toLowerCase() || 'used', description: form.desc, type: 'car' },
+        files,
+      })
+    } else {
+      await createPart.mutateAsync({
+        listing: { title: form.partName, category: form.category, compatible_with: form.compatible ? [form.compatible] : [], condition: form.partCondition?.toLowerCase().replace(' - ','_') || 'used', price: Number(form.partPrice), location: form.partLocation, description: form.partDesc },
+        files,
+      })
+    }
+    setSubmitted(true)
+  }
 
   const Field = ({ label, children }) => (
     <div style={{ display:'flex', flexDirection:'column', gap:'0.35rem' }}>
@@ -288,11 +309,12 @@ function PostListingModal({ onClose, defaultTab }) {
 
           {step === 3 && (
             <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-              <div style={{ height:180, border:`2px dashed rgba(191,192,192,0.2)`, borderRadius:14, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'0.75rem', cursor:'pointer', background:'rgba(191,192,192,0.02)', transition:'all 0.2s' }}
+              <input ref={fileRef} type="file" multiple accept="image/*" style={{ display:'none' }} onChange={e => setFiles(Array.from(e.target.files))} />
+              <div onClick={() => fileRef.current.click()} style={{ height:180, border:`2px dashed rgba(191,192,192,0.2)`, borderRadius:14, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'0.75rem', cursor:'pointer', background:'rgba(191,192,192,0.02)', transition:'all 0.2s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(239,131,84,0.4)'; e.currentTarget.style.background='rgba(239,131,84,0.02)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(191,192,192,0.2)'; e.currentTarget.style.background='rgba(191,192,192,0.02)' }}>
                 <div style={{ fontSize:'2.5rem' }}>📸</div>
-                <div style={{ fontFamily:D.display, fontSize:'1.1rem', fontWeight:600, color:C.textMuted }}>Upload Photos</div>
+                <div style={{ fontFamily:D.display, fontSize:'1.1rem', fontWeight:600, color:files.length ? C.green : C.textMuted }}>{files.length ? `${files.length} photo(s) selected` : 'Upload Photos'}</div>
                 <div style={{ fontFamily:D.body, fontSize:'0.78rem', color:C.textMuted }}>Up to 10 photos · JPG, PNG · Max 5MB each</div>
                 <div style={{ fontFamily:D.body, fontSize:'0.75rem', color:C.coral }}>First photo becomes the cover image</div>
               </div>
@@ -355,11 +377,11 @@ function PostListingModal({ onClose, defaultTab }) {
             Next →
           </button>
         ) : (
-          <button onClick={() => setSubmitted(true)}
-            style={{ background:C.coral, border:'none', borderRadius:10, padding:'0.75rem 2rem', cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.9rem', color:C.white, transition:'background 0.2s' }}
+          <button onClick={handleSubmit} disabled={createVehicle.isPending || createPart.isPending}
+            style={{ background:C.coral, border:'none', borderRadius:10, padding:'0.75rem 2rem', cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.9rem', color:C.white, transition:'background 0.2s', opacity: (createVehicle.isPending || createPart.isPending) ? 0.7 : 1 }}
             onMouseEnter={e => e.currentTarget.style.background=C.coralDim}
             onMouseLeave={e => e.currentTarget.style.background=C.coral}>
-            Submit Listing ✓
+            {(createVehicle.isPending || createPart.isPending) ? 'Submitting...' : 'Submit Listing ✓'}
           </button>
         )}
       </div>
@@ -376,6 +398,53 @@ function EmptyState({ msg }) {
   )
 }
 
+// Normalise DB rows into the same shape as the mock data
+function normaliseVehicle(row, i) {
+  const colors = ['#EF8354','#f39c12','#3b82f6','#27ae60','#a855f7']
+  return {
+    id: row.id ?? i,
+    title: `${row.make} ${row.model}`,
+    variant: `${row.year}${row.trim ? ' · ' + row.trim : ''}`,
+    price: row.price,
+    priceDisplay: `₹${(row.price/100000).toFixed(1)}L`,
+    km: row.mileage_km ? `${row.mileage_km.toLocaleString('en-IN')} km` : '—',
+    location: row.location || '—',
+    seller: row.profiles?.username || 'Seller',
+    sellerRating: 4.5,
+    verified: row.profiles?.is_verified || false,
+    emoji: row.type === 'motorcycle' ? '🏍️' : '🚗',
+    type: row.type === 'motorcycle' ? 'Bike' : 'Car',
+    fuel: row.fuel_type || 'Petrol',
+    transmission: row.transmission || 'Manual',
+    tag: row.condition === 'new' ? 'New' : 'Used',
+    saves: 0,
+    color: colors[i % colors.length],
+    posted: new Date(row.created_at).toLocaleDateString(),
+    desc: row.description || '',
+  }
+}
+
+function normalisePart(row, i) {
+  const colors = ['#EF8354','#27ae60','#3b82f6','#f39c12','#a855f7']
+  return {
+    id: row.id ?? i,
+    name: row.title,
+    category: row.category,
+    price: row.price,
+    priceDisplay: `₹${row.price.toLocaleString('en-IN')}`,
+    condition: row.condition?.replace('_',' ') || 'Used',
+    conditionColor: row.condition === 'new' ? '#5eaa7e' : '#f5a623',
+    seller: row.profiles?.username || 'Seller',
+    sellerRating: 4.5,
+    location: row.location || '—',
+    compatible: row.compatible_with?.[0] || 'Universal',
+    emoji: '⚙️',
+    color: colors[i % colors.length],
+    verified: row.profiles?.is_verified || false,
+    posted: new Date(row.created_at).toLocaleDateString(),
+  }
+}
+
 export default function MarketplacePage() {
   const { user } = useAuth()
   const [tab, setTab] = useState('cars')
@@ -387,13 +456,20 @@ export default function MarketplacePage() {
   const [catFilter, setCatFilter] = useState('All')
   const [sortBy, setSortBy] = useState('newest')
 
+  const { data: dbCars,  isLoading: loadingCars  } = useVehicleListings()
+  const { data: dbParts, isLoading: loadingParts } = usePartsListings()
+
+  // Use DB data when available, otherwise show mock data so UI is never empty
+  const rawCars  = (dbCars  && dbCars.length  > 0) ? dbCars.map(normaliseVehicle)  : CARS
+  const rawParts = (dbParts && dbParts.length > 0) ? dbParts.map(normalisePart) : PARTS
+
   const openSell = (t) => { setModalTab(t); setShowModal(true) }
 
-  const filteredCars = CARS.filter(c =>
+  const filteredCars = rawCars.filter(c =>
     (typeFilter === 'All' || c.type === typeFilter) &&
     (search === '' || c.title.toLowerCase().includes(search.toLowerCase()) || c.location.toLowerCase().includes(search.toLowerCase()))
   )
-  const filteredParts = PARTS.filter(p =>
+  const filteredParts = rawParts.filter(p =>
     (catFilter === 'All' || p.category === catFilter) &&
     (search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.compatible.toLowerCase().includes(search.toLowerCase()))
   )
@@ -476,9 +552,12 @@ export default function MarketplacePage() {
               <div style={{ marginLeft:'auto', fontFamily:D.body, fontSize:'0.82rem', color:C.textMuted }}>{filteredCars.length} listings</div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'1.25rem' }}>
-              {filteredCars.map(item => <CarCard key={item.id} item={item} onContact={setContacted} contacted={contacted} />)}
+              {loadingCars
+                ? Array.from({length:6}).map((_,i) => <CardSkeleton key={i} />)
+                : filteredCars.map(item => <CarCard key={item.id} item={item} onContact={setContacted} contacted={contacted} />)
+              }
             </div>
-            {filteredCars.length === 0 && <EmptyState msg="No listings match your search" />}
+            {!loadingCars && filteredCars.length === 0 && <EmptyState msg="No listings match your search" />}
           </>
         )}
 
@@ -495,9 +574,12 @@ export default function MarketplacePage() {
               <div style={{ marginLeft:'auto', fontFamily:D.body, fontSize:'0.82rem', color:C.textMuted }}>{filteredParts.length} listings</div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:'1.25rem' }}>
-              {filteredParts.map(item => <PartCard key={item.id} item={item} onContact={setContacted} contacted={contacted} />)}
+              {loadingParts
+                ? Array.from({length:8}).map((_,i) => <CardSkeleton key={i} />)
+                : filteredParts.map(item => <PartCard key={item.id} item={item} onContact={setContacted} contacted={contacted} />)
+              }
             </div>
-            {filteredParts.length === 0 && <EmptyState msg="No parts match your search" />}
+            {!loadingParts && filteredParts.length === 0 && <EmptyState msg="No parts match your search" />}
           </>
         )}
       </div>
