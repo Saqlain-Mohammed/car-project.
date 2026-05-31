@@ -369,8 +369,8 @@ export default function HeroSection() {
 
       {/* ── FOOTER ── */}
       <footer style={{ background: C.card, borderTop: '1px solid rgba(141,153,174,0.15)', padding: '2.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1 }}>
-        <div style={{ fontFamily: D.display, fontSize: '1.8rem', fontWeight: 900, letterSpacing: '0.08em', color: C.light }}>
-          REV<span style={{ color: C.red }}>VIT</span>
+        <div style={{ fontFamily: D.display, fontSize: '1.8rem', fontWeight: 900, letterSpacing: '0.06em', color: C.light }}>
+          TORQUE<span style={{ color: C.red }}>GRID</span>
         </div>
         <div style={{ display: 'flex', gap: '2rem' }}>
           {['explore', 'community', 'marketplace', 'knowledge', 'services'].map(l => (
@@ -382,7 +382,7 @@ export default function HeroSection() {
             </button>
           ))}
         </div>
-        <div style={{ fontFamily: D.display, fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(141,153,174,0.5)' }}>© 2026 REVVIT. All rights reserved.</div>
+        <div style={{ fontFamily: D.display, fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(141,153,174,0.5)' }}>© 2026 TorqueGrid. All rights reserved.</div>
       </footer>
 
     </div>

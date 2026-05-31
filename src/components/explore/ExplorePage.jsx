@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { Home, Film, Image, Zap, Newspaper, LayoutGrid, Car } from 'lucide-react'
 import OverviewFeed from './sections/OverviewFeed'
 import GarageProfile from './sections/GarageProfile'
 import ReelsSection from './sections/ReelsSection'
@@ -18,13 +18,13 @@ const C = {
 const D = { display:"'Space Grotesk', sans-serif", body:"'Inter', sans-serif" }
 
 const NAV_LINKS = [
-  { path:'', label:'Overview', icon:'⊞', exact:true },
-  { path:'garage', label:'My Garage', icon:'🏠' },
-  { path:'reels', label:'Reels', icon:'🎥' },
-  { path:'posts', label:'Posts', icon:'📸' },
-  { path:'wallpapers', label:'Wallpapers', icon:'🖼️' },
-  { path:'skills', label:'Skills', icon:'⚡' },
-  { path:'news', label:'News', icon:'📰' },
+  { path:'', label:'Overview', Icon: LayoutGrid, exact:true },
+  { path:'garage', label:'My Garage', Icon: Car },
+  { path:'reels', label:'Reels', Icon: Film },
+  { path:'posts', label:'Posts', Icon: Image },
+  { path:'wallpapers', label:'Wallpapers', Icon: Image },
+  { path:'skills', label:'Skills', Icon: Zap },
+  { path:'news', label:'News', Icon: Newspaper },
 ]
 
 const ONLINE_USERS = [
@@ -40,13 +40,14 @@ export default function ExplorePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const isOverview = location.pathname === '/app/explore' || location.pathname === '/app/explore/'
 
   return (
     <div style={{ display:'flex', minHeight:'calc(100vh - 60px)', background:C.bg }}>
       <aside style={{ width:240, flexShrink:0, background:C.surface, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', position:'sticky', top:60, height:'calc(100vh - 60px)', overflowY:'auto' }}>
         <div style={{ padding:'1.5rem 1.25rem 1rem' }}>
           <div style={{ fontFamily:D.body, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase', color:C.textMuted, marginBottom:'1rem' }}>Explore</div>
-          {NAV_LINKS.map(({ path, label, icon, exact }) => {
+          {NAV_LINKS.map(({ path, label, Icon, exact }) => {
             const fullPath = `/app/explore${path ? `/${path}` : ''}`
             const isActive = exact
               ? location.pathname === '/app/explore' || location.pathname === '/app/explore/'
@@ -56,7 +57,9 @@ export default function ExplorePage() {
                 style={{ display:'flex', alignItems:'center', gap:'0.75rem', width:'100%', padding:'0.65rem 0.9rem', marginBottom:'0.25rem', background: isActive ? 'rgba(239,131,84,0.12)' : 'transparent', border: isActive ? '1px solid rgba(239,131,84,0.25)' : '1px solid transparent', borderRadius:10, cursor:'pointer', textAlign:'left', transition:'all 0.2s' }}
                 onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background='rgba(191,192,192,0.06)'; e.currentTarget.style.borderColor='rgba(191,192,192,0.1)' }}}
                 onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='transparent' }}}>
-                <span style={{ width:32, height:32, borderRadius:9, background: isActive ? 'rgba(239,131,84,0.15)' : 'rgba(191,192,192,0.06)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{icon}</span>
+                <span style={{ width:32, height:32, borderRadius:9, background: isActive ? 'rgba(239,131,84,0.15)' : 'rgba(191,192,192,0.06)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Icon size={16} color={isActive ? C.coral : C.textMuted} />
+                </span>
                 <span style={{ fontFamily:D.body, fontSize:'0.88rem', fontWeight: isActive ? 600 : 400, color: isActive ? C.coral : C.textSoft }}>{label}</span>
                 {isActive && <div style={{ marginLeft:'auto', width:6, height:6, borderRadius:'50%', background:C.coral, flexShrink:0 }} />}
               </button>
@@ -64,25 +67,7 @@ export default function ExplorePage() {
           })}
         </div>
 
-        <div style={{ margin:'0.5rem 1.25rem', padding:'1rem', background:C.surface2, borderRadius:12, border:`1px solid ${C.border}` }}>
-          <div style={{ fontFamily:D.body, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.15em', textTransform:'uppercase', color:C.textMuted, marginBottom:'0.85rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-            <span style={{ width:6, height:6, borderRadius:'50%', background:C.green, display:'inline-block' }} /> Online Now
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
-            {ONLINE_USERS.slice(0,4).map(({ name, avatar, color }) => (
-              <div key={name} style={{ display:'flex', alignItems:'center', gap:'0.6rem', cursor:'pointer' }}>
-                <div style={{ position:'relative', flexShrink:0 }}>
-                  <div style={{ width:28, height:28, borderRadius:'50%', background:color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.72rem', color:'#fff' }}>{avatar}</div>
-                  <div style={{ position:'absolute', bottom:0, right:0, width:7, height:7, borderRadius:'50%', background:C.green, border:`1.5px solid ${C.surface2}` }} />
-                </div>
-                <span style={{ fontFamily:D.body, fontSize:'0.8rem', color:C.textSoft }}>{name}</span>
-              </div>
-            ))}
-            <div style={{ fontFamily:D.body, fontSize:'0.75rem', color:C.textMuted }}>+238 more online</div>
-          </div>
-        </div>
-
-        <div style={{ marginTop:'auto', padding:'1rem 1.25rem', borderTop:`1px solid ${C.border}` }}>
+<div style={{ marginTop:'auto', padding:'1rem 1.25rem', borderTop:`1px solid ${C.border}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', padding:'0.75rem', background:C.surface2, borderRadius:12 }}>
             <div style={{ width:36, height:36, borderRadius:'50%', background:`linear-gradient(135deg, ${C.coral}, #f39c12)`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'1rem', color:'#1f2230', flexShrink:0 }}>
               {user?.user_metadata?.username?.[0]?.toUpperCase() || 'U'}
@@ -98,7 +83,7 @@ export default function ExplorePage() {
       </aside>
 
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
-        <div style={{ padding:'0.7rem 1.5rem', background:C.surface, borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:'1rem', overflowX:'auto' }}>
+        {isOverview && <div style={{ padding:'0.7rem 1.5rem', background:C.surface, borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:'1rem', overflowX:'auto' }}>
           <span style={{ fontFamily:D.body, fontSize:'0.7rem', fontWeight:700, letterSpacing:'0.15em', textTransform:'uppercase', color:C.textMuted, flexShrink:0 }}>Active</span>
           <div style={{ display:'flex', gap:'0.5rem', alignItems:'center' }}>
             {ONLINE_USERS.map(({ name, avatar, color }) => (
@@ -113,7 +98,7 @@ export default function ExplorePage() {
             <span style={{ width:6, height:6, borderRadius:'50%', background:C.coral, display:'inline-block' }} />
             <span style={{ fontFamily:D.body, fontSize:'0.75rem', color:C.textMuted }}>Live feed updating</span>
           </div>
-        </div>
+        </div>}
 
         <div style={{ flex:1, overflowY:'auto' }}>
           <Routes>

@@ -4,12 +4,14 @@ const C = { bg:'#1f2230', surface:'#2a2f40', surface2:'#353b50', coral:'#EF8354'
 const D = { display:"'Space Grotesk', sans-serif", body:"'Inter', sans-serif" }
 
 const SPOTS = [
-  { id:1, user:'GhostLap', avatar:'G', color:'#8b90a0', car:'Ferrari 488 Pista', location:'MG Road, Bangalore', time:'10m ago', rarity:'Rare', likes:234, bg:'linear-gradient(135deg,#1a0808,#2d0f0f)' },
-  { id:2, user:'LapQueen', avatar:'L', color:'#a855f7', car:'Lamborghini Urus', location:'Vittal Mallya Rd', time:'45m ago', rarity:'Very Rare', likes:512, bg:'linear-gradient(135deg,#1a1208,#2d1e0a)' },
-  { id:3, user:'TurboMike', avatar:'T', color:'#f5a623', car:'Porsche 911 GT3', location:'Indiranagar, Bangalore', time:'2h ago', rarity:'Rare', likes:389, bg:'linear-gradient(135deg,#0a0a14,#0f0f24)' },
-  { id:4, user:'DriftQueen', avatar:'D', color:'#5eaa7e', car:'Honda Civic Type R FK8', location:'Koramangala', time:'4h ago', rarity:'Uncommon', likes:156, bg:'linear-gradient(135deg,#081408,#0a1e0a)' },
-  { id:5, user:'RaiderKing', avatar:'R', color:'#EF8354', car:'BMW M3 Competition', location:'Whitefield, Bangalore', time:'6h ago', rarity:'Uncommon', likes:198, bg:'linear-gradient(135deg,#140808,#1e0a0a)' },
-  { id:6, user:'ZeroShift', avatar:'Z', color:'#3b82f6', car:'Audi RS6 Avant', location:'HSR Layout, Bangalore', time:'1d ago', rarity:'Rare', likes:287, bg:'linear-gradient(135deg,#080e14,#0a141e)' },
+  { id:1, user:'GhostLap',   avatar:'G', color:'#8b90a0', car:'Ferrari 488 Pista',      location:'MG Road, Bangalore',        time:'10m ago', rarity:'Rare',      likes:234, img:'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=600&q=80' },
+  { id:2, user:'LapQueen',   avatar:'L', color:'#a855f7', car:'Lamborghini Urus',        location:'Vittal Mallya Rd',           time:'45m ago', rarity:'Very Rare', likes:512, img:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80' },
+  { id:3, user:'TurboMike',  avatar:'T', color:'#f5a623', car:'Porsche 911 GT3',         location:'Indiranagar, Bangalore',     time:'2h ago',  rarity:'Rare',      likes:389, img:'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&q=80' },
+  { id:4, user:'DriftQueen', avatar:'D', color:'#5eaa7e', car:'Honda Civic Type R FK8',  location:'Koramangala',               time:'4h ago',  rarity:'Uncommon',  likes:156, img:'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&q=80' },
+  { id:5, user:'RaiderKing', avatar:'R', color:'#EF8354', car:'BMW M3 Competition',      location:'Whitefield, Bangalore',      time:'6h ago',  rarity:'Uncommon',  likes:198, img:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80' },
+  { id:6, user:'ZeroShift',  avatar:'Z', color:'#3b82f6', car:'Audi RS6 Avant',          location:'HSR Layout, Bangalore',      time:'1d ago',  rarity:'Rare',      likes:287, img:'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&q=80' },
+  { id:7, user:'NightRider', avatar:'N', color:'#a855f7', car:'Toyota GR86',             location:'Hebbal, Bangalore',          time:'1d ago',  rarity:'Uncommon',  likes:143, img:'https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=600&q=80' },
+  { id:8, user:'ApexHunter', avatar:'A', color:'#5eaa7e', car:'Nissan GT-R R35',         location:'Airport Road, Bangalore',    time:'2d ago',  rarity:'Very Rare', likes:621, img:'https://images.unsplash.com/photo-1611859266238-4b98091d9d9b?w=600&q=80' },
 ]
 
 const rarityColors = { 'Very Rare':'#f5a623', Rare:'#EF8354', Uncommon:'#3b82f6', Common:'#8b90a0' }
@@ -55,8 +57,8 @@ export default function CarSpottingSection() {
           {SPOTS.map(spot => (
             <div key={spot.id} onMouseEnter={() => setHovered(spot.id)} onMouseLeave={() => setHovered(null)}
               style={{ background:C.surface, borderRadius:18, overflow:'hidden', border:`1px solid ${hovered===spot.id ? `${rarityColors[spot.rarity]}44` : C.border}`, transition:'all 0.25s', cursor:'pointer', transform: hovered===spot.id ? 'translateY(-3px)' : 'translateY(0)' }}>
-              <div style={{ height:160, background:spot.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'4rem', position:'relative' }}>
-                🚗
+              <div style={{ height:160, position:'relative', overflow:'hidden' }}>
+                <img src={spot.img} alt={spot.car} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform 0.4s' }} onMouseEnter={e => e.currentTarget.style.transform='scale(1.06)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'} />
                 <div style={{ position:'absolute', top:10, right:10, fontFamily:D.body, fontSize:'0.65rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', padding:'0.18rem 0.55rem', background:`${rarityColors[spot.rarity]}22`, border:`1px solid ${rarityColors[spot.rarity]}44`, borderRadius:6, color:rarityColors[spot.rarity] }}>{spot.rarity}</div>
               </div>
               <div style={{ padding:'1.25rem' }}>
@@ -80,7 +82,7 @@ export default function CarSpottingSection() {
             <div key={spot.id} style={{ background:C.surface, borderRadius:14, padding:'1.25rem 1.5rem', display:'flex', gap:'1.25rem', alignItems:'center', cursor:'pointer', border:`1px solid ${C.border}`, transition:'all 0.2s', borderLeft:`3px solid ${rarityColors[spot.rarity]}` }}
               onMouseEnter={e => e.currentTarget.style.background=C.surface2}
               onMouseLeave={e => e.currentTarget.style.background=C.surface}>
-              <div style={{ width:56, height:56, borderRadius:14, background:spot.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.8rem', flexShrink:0 }}>🚗</div>
+              <div style={{ width:56, height:56, borderRadius:14, overflow:'hidden', flexShrink:0 }}><img src={spot.img} alt={spot.car} style={{ width:'100%', height:'100%', objectFit:'cover' }} /></div>
               <div style={{ width:36, height:36, borderRadius:'50%', background:spot.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.9rem', color:'#fff', flexShrink:0 }}>{spot.avatar}</div>
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.2rem' }}>

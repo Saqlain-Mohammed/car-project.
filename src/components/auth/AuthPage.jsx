@@ -190,7 +190,7 @@ export default function AuthPage() {
               <path d="M5 13 L13 13" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <span style={{ fontFamily:D.display, fontSize:'1.4rem', fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>Revvit</span>
+          <span style={{ fontFamily:D.display, fontSize:'1.4rem', fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>TorqueGrid</span>
         </div>
 
         {/* Main copy */}

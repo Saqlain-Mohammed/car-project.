@@ -4,14 +4,14 @@ const C = { bg:'#1f2230', surface:'#2a2f40', surface2:'#353b50', coral:'#EF8354'
 const D = { display:"'Space Grotesk', sans-serif", body:"'Inter', sans-serif" }
 
 const WALLPAPERS = [
-  { id:1, title:'Civic EK9 Track Session', user:'TurboMike', emoji:'🚗', bg:'linear-gradient(135deg,#1a0808,#2d1010)', tag:'JDM', res:'4K', likes:892 },
-  { id:2, title:'Duke 390 Sunset Silhouette', user:'RaiderKing', emoji:'🏍️', bg:'linear-gradient(135deg,#0a1a0a,#102d10)', tag:'Moto', res:'8K', likes:1204 },
-  { id:3, title:'GTR R35 Wet Track', user:'GhostLap', emoji:'🌧️', bg:'linear-gradient(135deg,#080a1a,#10122d)', tag:'JDM', res:'4K', likes:2341 },
-  { id:4, title:'180SX Drift Smoke', user:'DriftQueen', emoji:'💨', bg:'linear-gradient(135deg,#1a1a08,#2d2d10)', tag:'Drift', res:'4K', likes:1876 },
-  { id:5, title:'Supra A80 Night Shoot', user:'NightRider', emoji:'🌙', bg:'linear-gradient(135deg,#0a0a0f,#111125)', tag:'JDM', res:'6K', likes:3102 },
-  { id:6, title:'Interceptor Mountain', user:'RoadKing', emoji:'🏔️', bg:'linear-gradient(135deg,#0a1010,#10252d)', tag:'Moto', res:'4K', likes:956 },
-  { id:7, title:'Type R FK8 Circuit', user:'LapQueen', emoji:'🏁', bg:'linear-gradient(135deg,#1a0505,#2d0a0a)', tag:'Honda', res:'4K', likes:1543 },
-  { id:8, title:'Swift Sport at Night', user:'ZeroShift', emoji:'⭐', bg:'linear-gradient(135deg,#050512,#0a0a20)', tag:'Indian', res:'4K', likes:724 },
+  { id:1, title:'Civic EK9 Track Session',     user:'TurboMike',  img:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80', tag:'JDM',   res:'4K', likes:892  },
+  { id:2, title:'Duke 390 Sunset Silhouette',  user:'RaiderKing', img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80', tag:'Moto',  res:'8K', likes:1204 },
+  { id:3, title:'GTR R35 Wet Track',           user:'GhostLap',   img:'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80', tag:'JDM',   res:'4K', likes:2341 },
+  { id:4, title:'180SX Drift Smoke',           user:'DriftQueen', img:'https://images.unsplash.com/photo-1611859266238-4b98091d9d9b?w=800&q=80', tag:'Drift', res:'4K', likes:1876 },
+  { id:5, title:'Supra A80 Night Shoot',       user:'NightRider', img:'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80', tag:'JDM',   res:'6K', likes:3102 },
+  { id:6, title:'Interceptor Mountain Pass',   user:'RoadKing',   img:'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80', tag:'Moto',  res:'4K', likes:956  },
+  { id:7, title:'Type R FK8 Circuit',          user:'LapQueen',   img:'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80', tag:'Honda', res:'4K', likes:1543 },
+  { id:8, title:'Swift Sport at Night',        user:'ZeroShift',  img:'https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=800&q=80', tag:'Indian',res:'4K', likes:724  },
 ]
 
 const TAGS = ['All','JDM','Moto','Drift','Honda','Indian','4K','8K']
@@ -47,8 +47,8 @@ export default function WallpapersSection() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(250px,1fr))', gap:'1rem' }}>
         {filtered.map(w => (
           <div key={w.id} onMouseEnter={() => setHovered(w.id)} onMouseLeave={() => setHovered(null)}
-            style={{ position:'relative', aspectRatio:'16/9', borderRadius:16, background:w.bg, overflow:'hidden', cursor:'pointer', border:`1px solid ${hovered===w.id ? 'rgba(239,131,84,0.4)' : C.border}`, transition:'all 0.25s', transform: hovered===w.id ? 'scale(1.02)' : 'scale(1)', boxShadow: hovered===w.id ? '0 12px 32px rgba(0,0,0,0.4)' : 'none' }}>
-            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'3.5rem' }}>{w.emoji}</div>
+            style={{ position:'relative', aspectRatio:'16/9', borderRadius:16, overflow:'hidden', cursor:'pointer', border:`1px solid ${hovered===w.id ? 'rgba(239,131,84,0.4)' : C.border}`, transition:'all 0.25s', transform: hovered===w.id ? 'scale(1.02)' : 'scale(1)', boxShadow: hovered===w.id ? '0 12px 32px rgba(0,0,0,0.4)' : 'none' }}>
+            <img src={w.img} alt={w.title} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
             <div style={{ position:'absolute', top:10, right:10, fontFamily:D.body, fontSize:'0.62rem', fontWeight:700, letterSpacing:'0.12em', background:C.coral, color:'#fff', padding:'0.18rem 0.5rem', borderRadius:6 }}>{w.res}</div>
             <div style={{ position:'absolute', top:10, left:10, fontFamily:D.body, fontSize:'0.62rem', fontWeight:700, background:'rgba(31,34,48,0.75)', color:C.textSoft, padding:'0.18rem 0.5rem', borderRadius:6, backdropFilter:'blur(4px)' }}>{w.tag}</div>
             {hovered === w.id && (

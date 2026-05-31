@@ -4,7 +4,7 @@ const AuthContext = createContext({})
 
 const DEMO_USER = {
   id: 'demo-123',
-  email: 'demo@revvit.com',
+  email: 'demo@torquegrid.com',
   user_metadata: {
     username: 'GarageKing',
     vehicle: { make: 'Royal Enfield', model: 'Meteor 350', year: '2023', type: 'bike' }

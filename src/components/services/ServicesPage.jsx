@@ -1,4 +1,58 @@
 import { useState } from 'react'
+import { CheckCircle } from 'lucide-react'
+
+// Reusable contact component used across all service detail views
+function ContactShopButton({ shop }) {
+  const [open,  setOpen]  = useState(false)
+  const [phone, setPhone] = useState('')
+  const [sent,  setSent]  = useState(false)
+
+  const submit = () => {
+    if (phone.length < 7) return
+    setSent(true)
+    setTimeout(() => { setSent(false); setOpen(false); setPhone('') }, 3500)
+  }
+
+  if (sent) return (
+    <div style={{ background:'rgba(94,170,126,0.1)', border:'1px solid rgba(94,170,126,0.3)', borderRadius:12, padding:'1rem', display:'flex', alignItems:'center', gap:'0.75rem' }}>
+      <CheckCircle size={22} color='#5eaa7e' />
+      <div>
+        <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'0.95rem', fontWeight:700, color:'#5eaa7e' }}>Message Sent!</div>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.78rem', color:'#8b90a0' }}>{shop.name} will call you back within 2 hours.</div>
+      </div>
+    </div>
+  )
+
+  if (open) return (
+    <div style={{ background:'rgba(239,131,84,0.08)', border:'1px solid rgba(239,131,84,0.2)', borderRadius:12, padding:'0.9rem' }}>
+      <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.78rem', color:'#8b90a0', marginBottom:'0.6rem' }}>Enter your phone — {shop.name} will call you back.</div>
+      <div style={{ display:'flex', gap:'0.5rem' }}>
+        <input value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={e => e.key==='Enter' && submit()}
+          placeholder="+91 98765 43210" autoFocus
+          style={{ flex:1, background:'#2a2f40', border:'1px solid rgba(191,192,192,0.12)', borderRadius:9, padding:'0.6rem 0.85rem', color:'#EDEEF0', fontFamily:"'Inter',sans-serif", fontSize:'0.88rem', outline:'none' }}
+          onFocus={e => e.target.style.borderColor='rgba(239,131,84,0.45)'}
+          onBlur={e => e.target.style.borderColor='rgba(191,192,192,0.12)'} />
+        <button onClick={submit}
+          style={{ background:'#EF8354', border:'none', borderRadius:9, padding:'0.6rem 1.1rem', cursor:'pointer', fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:'0.85rem', color:'#fff', opacity: phone.length < 7 ? 0.55 : 1, transition:'all 0.2s' }}>
+          Send
+        </button>
+        <button onClick={() => setOpen(false)}
+          style={{ background:'transparent', border:'1px solid rgba(191,192,192,0.12)', borderRadius:9, padding:'0.6rem 0.85rem', cursor:'pointer', fontFamily:"'Inter',sans-serif", fontSize:'0.82rem', color:'#8b90a0', transition:'all 0.2s' }}>
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <button onClick={() => setOpen(true)}
+      style={{ width:'100%', background:'#EF8354', border:'none', borderRadius:10, padding:'0.7rem', cursor:'pointer', fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:'0.88rem', color:'#fff', transition:'background 0.2s' }}
+      onMouseEnter={e => e.currentTarget.style.background='#d96a3a'}
+      onMouseLeave={e => e.currentTarget.style.background='#EF8354'}>
+      Get Quote
+    </button>
+  )
+}
 
 const C = {
   bg:'#1f2230', surface:'#2a2f40', surface2:'#353b50', navy:'#2D3142',
@@ -88,7 +142,6 @@ function ServiceDetailShell({ icon, title, color, onBack, children }) {
 }
 
 function RepairView({ onBack }) {
-  const [contactId, setContactId] = useState(null)
   const shops = [
     { id:1, name:'Pradeep Motors', rating:4.8, reviews:214, location:'Indiranagar, Bangalore', speciality:'Japanese Cars · ECU Tuning', price:'₹500/hr', verified:true, wait:'Available Now' },
     { id:2, name:'AutoCare Pro', rating:4.6, reviews:178, location:'Koramangala, Bangalore', speciality:'All Makes · AC Specialist', price:'₹400/hr', verified:true, wait:'1hr wait' },
@@ -120,22 +173,7 @@ function RepairView({ onBack }) {
               <span style={{ fontFamily:D.display, fontSize:'1rem', fontWeight:700, color:C.coral }}>{s.price}</span>
               <span style={{ fontFamily:D.body, fontSize:'0.75rem', color: s.wait === 'Available Now' ? C.green : C.amber, background: s.wait === 'Available Now' ? 'rgba(94,170,126,0.1)' : 'rgba(245,166,35,0.1)', padding:'0.2rem 0.6rem', borderRadius:6 }}>● {s.wait}</span>
             </div>
-            {contactId === s.id ? (
-              <div style={{ background:'rgba(239,131,84,0.08)', border:'1px solid rgba(239,131,84,0.2)', borderRadius:10, padding:'0.85rem' }}>
-                <div style={{ fontFamily:D.body, fontSize:'0.78rem', color:C.textMuted, marginBottom:'0.6rem' }}>{s.name} will call you back within 2 hours.</div>
-                <div style={{ display:'flex', gap:'0.5rem' }}>
-                  <input placeholder="Your phone number" style={{ flex:1, background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, padding:'0.5rem 0.8rem', color:C.text, fontFamily:D.body, fontSize:'0.85rem', outline:'none' }} />
-                  <button style={{ background:C.coral, border:'none', borderRadius:8, padding:'0.5rem 1rem', cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.82rem', color:C.white }}>Send</button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => setContactId(s.id)}
-                style={{ width:'100%', background:C.coral, border:'none', borderRadius:10, padding:'0.7rem', cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.88rem', color:C.white, transition:'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background=C.coralDim}
-                onMouseLeave={e => e.currentTarget.style.background=C.coral}>
-                Get Quote
-              </button>
-            )}
+            <ContactShopButton shop={s} />
           </div>
         ))}
       </div>
@@ -412,7 +450,7 @@ export default function ServicesPage() {
               <div style={{ fontFamily:D.body, fontSize:'0.75rem', fontWeight:600, letterSpacing:'0.15em', textTransform:'uppercase', color:C.coral, marginBottom:'0.5rem' }}>Real World</div>
               <h1 style={{ fontFamily:D.display, fontSize:'3rem', fontWeight:700, color:C.text, lineHeight:1.05, letterSpacing:'-0.03em', marginBottom:'0.75rem' }}>Services Directory</h1>
               <p style={{ fontFamily:D.body, fontSize:'1.05rem', color:C.textMuted, maxWidth:580, lineHeight:1.65 }}>
-                Everything your vehicle needs — repair, upgrades, protection, and emergency help. All services verified by the Revvit community.
+                Everything your vehicle needs — repair, upgrades, protection, and emergency help. All services verified by the TorqueGrid community.
               </p>
             </div>
 
