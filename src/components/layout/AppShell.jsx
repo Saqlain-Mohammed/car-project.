@@ -1,22 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Search, Bell, Settings, LogOut, ChevronDown, X, Check } from 'lucide-react'
+import { Search, Bell, Settings, LogOut, ChevronDown, X } from 'lucide-react'
 import { useUnreadCount, useNotifications, useMarkAllRead, useMarkRead } from '../../hooks/useNotifications'
-import HeroSection from '../explore/HeroSection'
-import ExplorePage from '../explore/ExplorePage'
-import CommunityPage from '../community/CommunityPage'
+import HeroSection    from '../explore/HeroSection'
+import ExplorePage    from '../explore/ExplorePage'
+import CommunityPage  from '../community/CommunityPage'
 import MarketplacePage from '../marketplace/MarketplacePage'
-import KnowledgePage from '../knowledge/KnowledgePage'
-import ServicesPage from '../services/ServicesPage'
+import KnowledgePage  from '../knowledge/KnowledgePage'
+import ServicesPage   from '../services/ServicesPage'
 
 const NAV_ITEMS = [
-  { path: '',          label: 'Home'        },
-  { path: 'explore',   label: 'Explore'     },
-  { path: 'community', label: 'Community'   },
-  { path: 'marketplace',label:'Marketplace' },
-  { path: 'knowledge', label: 'Knowledge'   },
-  { path: 'services',  label: 'Services'    },
+  { path: '',           label: 'Home'        },
+  { path: 'explore',    label: 'Explore'     },
+  { path: 'community',  label: 'Community'   },
+  { path: 'marketplace',label: 'Marketplace' },
+  { path: 'knowledge',  label: 'Knowledge'   },
+  { path: 'services',   label: 'Services'    },
 ]
 
 export default function AppShell() {
@@ -28,29 +28,27 @@ export default function AppShell() {
   const [notifOpen,   setNotifOpen]   = useState(false)
   const profileRef = useRef(null)
   const notifRef   = useRef(null)
-  const username = user?.user_metadata?.username || 'User'
+  const username   = user?.user_metadata?.username || 'User'
 
   const { data: unreadCount = 0 } = useUnreadCount()
   const { data: notifData }        = useNotifications()
   const markAllRead = useMarkAllRead()
   const markRead    = useMarkRead()
-
   const notifications = notifData?.pages?.flat() ?? []
 
-  // Close dropdowns on outside click
   useEffect(() => {
-    const handler = (e) => {
+    const h = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
-      if (notifRef.current  && !notifRef.current.contains(e.target))  setNotifOpen(false)
+      if (notifRef.current   && !notifRef.current.contains(e.target))   setNotifOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [])
 
   return (
     <div style={{ minHeight: '100vh', background: '#1f2230' }}>
 
-      {/* ── Navbar ───────────────────────────────────────── */}
+      {/* ── Navbar ── */}
       <header style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
         background: 'rgba(18,20,32,0.72)',
@@ -64,7 +62,7 @@ export default function AppShell() {
           {/* Logo */}
           <div onClick={() => navigate('/app')}
             style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.9rem', fontWeight: 900, letterSpacing: '0.06em', color: '#EDF2F4', cursor: 'pointer', flexShrink: 0, userSelect: 'none' }}>
-TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
+            TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
           </div>
 
           {/* Nav links */}
@@ -86,7 +84,6 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
                   color: isActive ? '#EF8354' : '#8D99AE',
                   borderBottom: isActive ? '2px solid #EF8354' : '2px solid transparent',
                   transition: 'all 0.2s',
-                  position: 'relative',
                 })}
                 onMouseEnter={e => { if (!e.currentTarget.style.color.includes('239')) e.currentTarget.style.color = '#EDEEF0' }}
                 onMouseLeave={e => { if (!e.currentTarget.className?.includes('active')) e.currentTarget.style.color = '#8D99AE' }}>
@@ -118,7 +115,7 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
               </button>
             )}
 
-            {/* Notification bell + dropdown */}
+            {/* Notification bell */}
             <div ref={notifRef} style={{ position: 'relative' }}>
               <button onClick={() => { setNotifOpen(o => !o); if (!notifOpen && unreadCount > 0) markAllRead.mutate() }}
                 style={{ background: notifOpen ? 'rgba(239,131,84,0.1)' : 'none', border: 'none', cursor: 'pointer', color: '#8D99AE', padding: '0.5rem', borderRadius: 8, position: 'relative', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
@@ -153,12 +150,12 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
                         style={{ padding: '0.85rem 1rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start', background: n.is_read ? 'none' : 'rgba(239,131,84,0.06)', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer', transition: 'background 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                         onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'none' : 'rgba(239,131,84,0.06)'}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: n.actor?.avatar_url ? `url(${n.actor.avatar_url})` : '#EF8354', backgroundSize: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: '0.75rem', color: '#fff', flexShrink: 0 }}>
-                          {!n.actor?.avatar_url && (n.actor?.username?.[0]?.toUpperCase() || '?')}
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#EF8354', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: '0.75rem', color: '#fff', flexShrink: 0 }}>
+                          {n.actor?.username?.[0]?.toUpperCase() || '?'}
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontFamily: "'Inter',sans-serif", fontSize: '0.82rem', color: '#EDEEF0', lineHeight: 1.4 }}>{n.body}</div>
-                          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: '0.68rem', color: '#8D99AE', marginTop: '0.2rem' }}>{new Date(n.created_at).toRelativeString?.() || new Date(n.created_at).toLocaleDateString()}</div>
+                          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: '0.68rem', color: '#8D99AE', marginTop: '0.2rem' }}>{new Date(n.created_at).toLocaleDateString()}</div>
                         </div>
                         {!n.is_read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#EF8354', flexShrink: 0, marginTop: 4 }} />}
                       </div>
@@ -168,7 +165,7 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
               )}
             </div>
 
-            {/* Profile circle + dropdown */}
+            {/* Profile */}
             <div ref={profileRef} style={{ position: 'relative', marginLeft: '0.35rem' }}>
               <button onClick={() => setProfileOpen(o => !o)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', background: profileOpen ? 'rgba(239,131,84,0.12)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 40, padding: '0.25rem 0.6rem 0.25rem 0.25rem', cursor: 'pointer', transition: 'all 0.2s' }}>
@@ -186,8 +183,8 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
                     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', color: '#8D99AE', marginTop: '0.1rem' }}>{user?.email}</div>
                   </div>
                   {[
-                    { icon: <Settings size={15} />, label: 'Settings', action: () => {} },
-                    { icon: <LogOut size={15} />,   label: 'Sign Out',  action: async () => { await signOut(); navigate('/auth') }, danger: true },
+                    { icon: <Settings size={15} />, label: 'Settings', action: () => {},                                                    danger: false },
+                    { icon: <LogOut   size={15} />, label: 'Sign Out', action: async () => { await signOut(); navigate('/auth') }, danger: true  },
                   ].map(({ icon, label, action, danger }) => (
                     <button key={label} onClick={() => { setProfileOpen(false); action() }}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: '0.85rem', fontWeight: 500, color: danger ? '#ef4444' : '#BFC0C0', transition: 'background 0.15s' }}
@@ -205,12 +202,12 @@ TORQUE<span style={{ color: '#EF8354' }}>GRID</span>
 
       <main style={{ paddingTop: 60 }}>
         <Routes>
-          <Route path=""            element={<HeroSection />}    />
-          <Route path="explore/*"   element={<ExplorePage />}    />
-          <Route path="community/*" element={<CommunityPage />}  />
+          <Route path=""             element={<HeroSection />}    />
+          <Route path="explore/*"    element={<ExplorePage />}    />
+          <Route path="community/*"  element={<CommunityPage />}  />
           <Route path="marketplace/*" element={<MarketplacePage />} />
-          <Route path="knowledge/*" element={<KnowledgePage />}  />
-          <Route path="services/*"  element={<ServicesPage />}   />
+          <Route path="knowledge/*"  element={<KnowledgePage />}  />
+          <Route path="services/*"   element={<ServicesPage />}   />
         </Routes>
       </main>
     </div>

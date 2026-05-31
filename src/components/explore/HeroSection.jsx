@@ -2,271 +2,328 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import {
+  Wrench, Camera, Flag, BookOpen, ShoppingBag, Settings,
+  ChevronRight, Star, Shield, TrendingUp, Users, Zap,
+} from 'lucide-react'
 
+/* ── Colour system — matches the rest of the app ─────────── */
 const C = {
-  dark: '#2B2D42', steel: '#8D99AE', light: '#EDF2F4',
-  red: '#EF233C', redDim: '#c01a2f', black: '#1a1b26',
-  card: '#23253a', muted: '#8D99AE',
+  bg:      '#1f2230',
+  surface: '#2a2f40',
+  surface2:'#353b50',
+  coral:   '#EF8354',
+  coralDim:'#d96a3a',
+  amber:   '#f5a623',
+  green:   '#5eaa7e',
+  text:    '#EDEEF0',
+  textSoft:'#BFC0C0',
+  muted:   '#8b90a0',
+  border:  'rgba(191,192,192,0.12)',
 }
-const D = { display: "'Barlow Condensed', sans-serif", body: "'Barlow', sans-serif" }
+const D = {
+  display: "'Space Grotesk', sans-serif",
+  body:    "'Inter', sans-serif",
+  headline:"'Barlow Condensed', sans-serif",
+}
 
 const TICKER_ITEMS = [
   'Virtual Garage', 'Transformation Timelines', 'Parts Marketplace',
   'Live Motorsport Feeds', 'Car Spotting', 'Crew & Clubs',
-  'Reels Section', 'Insurance Portal', 'PDI Checklists', 'Knowledge Hub',
+  'Reels', 'Insurance Portal', 'PDI Checklists', 'Knowledge Hub',
 ]
 
 const FEATURES = [
-  { n: '01', icon: '🔧', name: 'Virtual Garage', desc: 'Vehicle-centric profiles with transformation timelines, mod lists, and achievement badges. Each machine gets its own story.' },
-  { n: '02', icon: '📸', name: 'Social Feed', desc: 'Posts, Reels, car spotting, wallpapers. Verified brand posts alongside real street content.' },
-  { n: '03', icon: '🏁', name: 'Motorsport', desc: 'Live F1, MotoGP and racing feeds with real-time community chat. Feel the race with your crew.' },
-  { n: '04', icon: '📚', name: 'Knowledge Hub', desc: 'Full spec database on every car and bike. Parts directories, maintenance guides, and daily news.' },
-  { n: '05', icon: '🛒', name: 'Marketplace', desc: 'Buy and sell complete vehicles or individual parts. Community-trusted listings with verified sellers.' },
-  { n: '06', icon: '⚙️', name: 'Services', desc: 'Insurance portal, PDI checklists, and a verified directory of custom mod makers near you.' },
+  { Icon: Wrench,      n:'01', name:'Virtual Garage',  desc:'Vehicle-centric profiles with transformation timelines, mod lists, and achievement badges. Each machine gets its own story.' },
+  { Icon: Camera,      n:'02', name:'Social Feed',     desc:'Posts, Reels, car spotting, wallpapers. Verified brand posts alongside real street content from the community.' },
+  { Icon: Flag,        n:'03', name:'Motorsport',      desc:'Live F1, MotoGP and racing feeds with real-time community chat. Feel every lap with your crew.' },
+  { Icon: BookOpen,    n:'04', name:'Knowledge Hub',   desc:'Full spec database on every car and bike. Parts directories, maintenance guides, and daily news.' },
+  { Icon: ShoppingBag, n:'05', name:'Marketplace',     desc:'Buy and sell complete vehicles or individual parts. Community-trusted listings with verified sellers.' },
+  { Icon: Settings,    n:'06', name:'Services',        desc:'Insurance portal, PDI checklists, and a directory of verified custom mod makers near you.' },
 ]
 
 const MARKET_ITEMS = [
-  { icon: '🚗', name: 'Honda Civic Type R', price: '₹18.5L', tag: 'Complete Vehicle · 2017' },
-  { icon: '🔩', name: 'Turbocharger — GT3582', price: '₹62,000', tag: 'Engine Parts · Used' },
-  { icon: '🏍️', name: 'Kawasaki Z900 RS', price: '₹9.1L', tag: 'Motorcycle · 2021' },
-  { icon: '💨', name: 'K&N Air Filter', price: '₹4,200', tag: 'Intake System · New' },
+  { img:'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&q=75', name:'Honda Civic Type R', price:'₹18.5L', tag:'Complete Vehicle · 2017' },
+  { img:'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&q=75', name:'Turbocharger — GT3582', price:'₹62,000', tag:'Engine Parts · Used' },
+  { img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=75', name:'Kawasaki Z900 RS', price:'₹9.1L', tag:'Motorcycle · 2021' },
+  { img:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400&q=75', name:'K&N Cold Air Intake', price:'₹4,200', tag:'Intake System · New' },
 ]
 
 const COMMUNITY_CARDS = [
-  { icon: '📅', name: 'Meetups & Events', desc: 'Interactive map and calendar for local meets, group rides, and track days in your city.' },
-  { icon: '👥', name: 'Crews & Clubs', desc: 'Create or join a local automotive club with private chats and organised group rides.' },
-  { icon: '🏎️', name: 'Live Motorsport', desc: 'Real-time F1, MotoGP, and racing event feeds with live community chat. Watch with your crew and react as it happens.', wide: true },
-  { icon: '🎥', name: 'Reels', desc: 'Short-form vertical videos — exhausts, flyby clips, skill showcases, mod installs.' },
-  { icon: '📸', name: 'Car Spotting', desc: 'Capture rare machines on the street. Upload wallpapers. Build the community image library.' },
+  { Icon: Star,        name:'Meetups & Events',  desc:'Interactive calendar for local meets, group rides, and track days in your city.', wide:false },
+  { Icon: Users,       name:'Crews & Clubs',     desc:'Create or join a local automotive club with private chats and organised rides.', wide:false },
+  { Icon: Zap,         name:'Live Motorsport',   desc:'Real-time F1, MotoGP, and racing feeds with live community chat. Watch with your crew.', wide:true },
+  { Icon: Camera,      name:'Reels',             desc:'Short-form vertical videos — exhausts, flyby clips, skill showcases, mod installs.', wide:false },
+  { Icon: TrendingUp,  name:'Car Spotting',      desc:'Capture rare machines on the street. Upload wallpapers. Build the community library.', wide:false },
 ]
 
-function SectionLabel({ children }) {
+/* ── Reusable section label ─────────────────────────────── */
+function Label({ children }) {
   return (
-    <div style={{ fontFamily: D.display, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.35em', textTransform: 'uppercase', color: C.red, marginBottom: '0.8rem' }}>
+    <div style={{ fontFamily:D.body, fontSize:'0.72rem', fontWeight:700, letterSpacing:'0.25em', textTransform:'uppercase', color:C.coral, marginBottom:'0.85rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+      <span style={{ display:'inline-block', width:20, height:2, background:C.coral, borderRadius:1 }} />
       {children}
     </div>
   )
 }
 
-function SectionTitle({ children }) {
-  return (
-    <h2 style={{ fontFamily: D.display, fontSize: 'clamp(2.5rem,6vw,5rem)', lineHeight: 0.95, letterSpacing: '0.03em', color: C.light }}>
-      {children}
-    </h2>
-  )
-}
-
-function FeatureCard({ n, icon, name, desc }) {
+/* ── Feature card ────────────────────────────────────────── */
+function FeatureCard({ Icon, n, name, desc }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ background: hovered ? C.card : C.black, padding: '2.5rem 2rem', position: 'relative', overflow: 'hidden', transition: 'background 0.3s', cursor: 'default' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: hovered ? '100%' : 0, background: C.red, transition: 'height 0.4s ease' }} />
-      <div style={{ fontFamily: D.display, fontSize: '4rem', fontWeight: 900, color: hovered ? 'rgba(239,35,60,0.35)' : 'rgba(239,35,60,0.12)', lineHeight: 1, marginBottom: '1rem', transition: 'color 0.3s' }}>{n}</div>
-      <div style={{ fontSize: '1.4rem', marginBottom: '0.8rem' }}>{icon}</div>
-      <div style={{ fontFamily: D.display, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.light, marginBottom: '0.6rem' }}>{name}</div>
-      <p style={{ fontFamily: D.body, fontSize: '0.875rem', lineHeight: 1.6, color: C.muted }}>{desc}</p>
+    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{ background: hovered ? C.surface : '#1a1c2a', padding:'2.5rem 2rem', position:'relative', overflow:'hidden', transition:'background 0.3s', cursor:'default', borderTop:`3px solid ${hovered ? C.coral : 'transparent'}` }}>
+      <div style={{ position:'absolute', top:0, left:0, width:3, height: hovered ? '100%' : 0, background:C.coral, transition:'height 0.35s ease', display:'none' }} />
+      <div style={{ fontFamily:D.headline, fontSize:'3.5rem', fontWeight:900, color: hovered ? `rgba(239,131,84,0.28)` : `rgba(239,131,84,0.1)`, lineHeight:1, marginBottom:'1.25rem', transition:'color 0.3s' }}>{n}</div>
+      <div style={{ width:42, height:42, borderRadius:12, background: hovered ? 'rgba(239,131,84,0.15)' : 'rgba(191,192,192,0.06)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1rem', transition:'background 0.3s' }}>
+        <Icon size={20} color={hovered ? C.coral : C.muted} />
+      </div>
+      <div style={{ fontFamily:D.display, fontSize:'1rem', fontWeight:700, letterSpacing:'0.04em', textTransform:'uppercase', color:C.text, marginBottom:'0.6rem' }}>{name}</div>
+      <p style={{ fontFamily:D.body, fontSize:'0.875rem', lineHeight:1.65, color:C.muted }}>{desc}</p>
     </div>
   )
 }
 
+/* ── Main component ─────────────────────────────────────── */
 export default function HeroSection() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Enthusiast'
-  const vehicle = user?.user_metadata?.vehicle
+  const vehicle  = user?.user_metadata?.vehicle
 
   return (
-    <div style={{ background: C.dark, position: 'relative' }}>
+    <div style={{ background:C.bg, position:'relative' }}>
 
-      {/* ── HERO ── */}
-      <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 3rem 6rem', overflow: 'hidden' }}>
+      {/* ══════════════════════════════════════
+          HERO
+      ══════════════════════════════════════ */}
+      <section style={{ position:'relative', minHeight:'100vh', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'0 4rem 6rem', overflow:'hidden' }}>
 
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          background: `radial-gradient(ellipse 60% 50% at 70% 50%, rgba(239,35,60,0.10) 0%, transparent 70%),
-                       radial-gradient(ellipse 40% 60% at 20% 80%, rgba(141,153,174,0.06) 0%, transparent 60%),
-                       linear-gradient(160deg, #1a1b26 0%, #2B2D42 50%, #1a1b26 100%)`
-        }} />
-
-        {/* Speed lines */}
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '55%', height: '100%', overflow: 'hidden', zIndex: 0 }}>
-          <div style={{
-            position: 'absolute', top: '-20%', right: '-10%', width: '200%', height: '200%',
-            background: 'repeating-linear-gradient(-25deg, transparent 0px, transparent 60px, rgba(239,35,60,0.04) 60px, rgba(239,35,60,0.04) 61px)',
-            animation: 'speedLines 8s linear infinite'
+        {/* Background: real car image, darkened */}
+        <div style={{ position:'absolute', inset:0, zIndex:0, overflow:'hidden' }}>
+          <img
+            src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1600&q=80"
+            alt=""
+            style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', opacity:0.18, filter:'saturate(0.6)' }}
+          />
+          {/* Layered gradient over the photo */}
+          <div style={{ position:'absolute', inset:0,
+            background:`linear-gradient(to right, ${C.bg} 35%, rgba(31,34,48,0.7) 65%, rgba(31,34,48,0.4) 100%),
+                        linear-gradient(to top, ${C.bg} 0%, transparent 55%)`
           }} />
         </div>
 
-        {/* Corner boxes */}
-        <div style={{ position: 'absolute', top: 80, right: 60, width: 260, height: 260, border: '1px solid rgba(239,35,60,0.12)', zIndex: 0 }} />
-        <div style={{ position: 'absolute', top: 100, right: 80, width: 220, height: 220, border: '1px solid rgba(239,35,60,0.06)', zIndex: 0 }} />
+        {/* Animated diagonal speed lines */}
+        <div style={{ position:'absolute', top:0, right:0, width:'55%', height:'100%', overflow:'hidden', zIndex:0 }}>
+          <div style={{
+            position:'absolute', top:'-20%', right:'-10%', width:'200%', height:'200%',
+            background:'repeating-linear-gradient(-22deg, transparent 0px, transparent 60px, rgba(239,131,84,0.035) 60px, rgba(239,131,84,0.035) 61px)',
+            animation:'speedLines 10s linear infinite',
+          }} />
+        </div>
 
-        {/* Stats — right side */}
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}
-          style={{ position: 'absolute', right: '3rem', bottom: '6rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 1, alignItems: 'center' }}>
-          {[['50K+', 'Builds Listed'], ['120+', 'Meets / Month'], ['98%', 'Real Enthusiasts']].map(([num, label], i) => (
-            <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: D.display, fontSize: '2.2rem', fontWeight: 900, color: C.light, lineHeight: 1 }}>{num}</div>
-              <div style={{ fontFamily: D.display, fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: C.muted, marginTop: '0.15rem' }}>{label}</div>
-              {i < 2 && <div style={{ width: 1, height: 32, background: `linear-gradient(to bottom, ${C.red}, transparent)`, margin: '0.6rem auto 0.6rem' }} />}
+        {/* Decorative corner frame — right side */}
+        <div style={{ position:'absolute', top:100, right:80, width:240, height:240, border:`1px solid rgba(239,131,84,0.14)`, zIndex:0, borderRadius:4 }} />
+        <div style={{ position:'absolute', top:118, right:98, width:206, height:206, border:`1px solid rgba(239,131,84,0.07)`, zIndex:0, borderRadius:2 }} />
+
+        {/* Stats — right column */}
+        <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.85 }}
+          style={{ position:'absolute', right:'4rem', bottom:'6.5rem', display:'flex', flexDirection:'column', gap:'0.4rem', zIndex:1, alignItems:'center' }}>
+          {[['50K+','Builds Listed'],['120+','Meets / Month'],['98%','Real Enthusiasts']].map(([num, label], i) => (
+            <div key={label} style={{ textAlign:'center' }}>
+              <div style={{ fontFamily:D.headline, fontSize:'2rem', fontWeight:900, color:C.text, lineHeight:1 }}>{num}</div>
+              <div style={{ fontFamily:D.body, fontSize:'0.62rem', letterSpacing:'0.2em', textTransform:'uppercase', color:C.muted, marginTop:'0.12rem' }}>{label}</div>
+              {i < 2 && <div style={{ width:1, height:28, background:`linear-gradient(to bottom, ${C.coral}, transparent)`, margin:'0.55rem auto' }} />}
             </div>
           ))}
         </motion.div>
 
         {/* Scroll hint */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
-          style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', fontFamily: D.display, fontSize: '0.62rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: C.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1 }}>
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.3 }}
+          style={{ position:'absolute', bottom:'2rem', left:'50%', transform:'translateX(-50%)', fontFamily:D.body, fontSize:'0.6rem', letterSpacing:'0.3em', textTransform:'uppercase', color:C.muted, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.4rem', zIndex:1 }}>
           Scroll
-          <span style={{ display: 'block', width: 1, height: 36, background: `linear-gradient(to bottom, ${C.red}, transparent)`, animation: 'scrollPulse 2s ease-in-out infinite' }} />
+          <span style={{ display:'block', width:1, height:34, background:`linear-gradient(to bottom, ${C.coral}, transparent)`, animation:'scrollPulse 2s ease-in-out infinite' }} />
         </motion.div>
 
-        {/* Main text */}
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 900 }}>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            style={{ fontFamily: D.display, fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.3em', textTransform: 'uppercase', color: C.red, marginBottom: '1.2rem' }}>
-            ● Your Garage Is Live — Welcome Back, {username}
+        {/* ── Main copy ── */}
+        <div style={{ position:'relative', zIndex:1, maxWidth:820 }}>
+
+          {/* Welcome pill */}
+          <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15 }}
+            style={{ display:'inline-flex', alignItems:'center', gap:'0.6rem', marginBottom:'1.5rem', padding:'0.35rem 0.85rem 0.35rem 0.5rem', background:'rgba(239,131,84,0.1)', border:`1px solid rgba(239,131,84,0.3)`, borderRadius:40, backdropFilter:'blur(6px)' }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:C.coral, display:'inline-block', boxShadow:`0 0 6px ${C.coral}` }} />
+            <span style={{ fontFamily:D.body, fontSize:'0.78rem', fontWeight:600, letterSpacing:'0.08em', color:C.coral }}>
+              Your Garage Is Live — Welcome Back, {username}
+            </span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            style={{ fontFamily: D.display, fontSize: 'clamp(5rem,14vw,12rem)', lineHeight: 0.88, fontWeight: 900, letterSpacing: '0.02em', color: C.light }}>
+          {/* Headline */}
+          <motion.h1 initial={{ opacity:0, y:28 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.25 }}
+            style={{ fontFamily:D.headline, fontSize:'clamp(5rem,13vw,11rem)', lineHeight:0.88, fontWeight:900, letterSpacing:'0.02em', color:C.text, marginBottom:0 }}>
             YOUR<br />
-            MACHINE<span style={{ color: C.red }}>.</span><br />
-            <span style={{ WebkitTextStroke: `2px ${C.light}`, color: 'transparent' }}>YOUR STORY</span>
+            MACHINE<span style={{ color:C.coral }}>.</span><br />
+            <span style={{ WebkitTextStroke:`2px ${C.text}`, color:'transparent' }}>YOUR STORY</span>
           </motion.h1>
 
-          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            style={{ fontFamily: D.display, fontSize: 'clamp(1rem,2vw,1.25rem)', fontWeight: 400, letterSpacing: '0.04em', color: C.muted, maxWidth: 500, lineHeight: 1.6, marginTop: '2rem' }}>
+          {/* Sub-copy */}
+          <motion.p initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.42 }}
+            style={{ fontFamily:D.body, fontSize:'clamp(0.95rem,1.8vw,1.15rem)', fontWeight:400, color:C.textSoft, maxWidth:480, lineHeight:1.65, marginTop:'1.75rem' }}>
             Not just a profile — a full garage. Showcase your build, connect with the street, buy and sell parts, and live the culture.
           </motion.p>
 
+          {/* My ride badge */}
           {vehicle?.make && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', padding: '0.5rem 1.2rem', background: 'rgba(43,45,66,0.8)', border: `1px solid rgba(239,35,60,0.3)` }}>
-              <span style={{ color: C.red, fontSize: '0.7rem', fontFamily: D.display, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>My Ride</span>
-              <span style={{ width: 1, height: 14, background: 'rgba(239,35,60,0.4)' }} />
-              <span style={{ fontFamily: D.display, fontWeight: 700, fontSize: '1rem', color: C.light, letterSpacing: '0.05em' }}>
-                {vehicle.year} {vehicle.make} {vehicle.model}
-              </span>
+            <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.52 }}
+              style={{ display:'inline-flex', alignItems:'center', gap:'0.75rem', marginTop:'1.25rem', padding:'0.5rem 1.1rem', background:C.surface, border:`1px solid rgba(239,131,84,0.3)`, borderRadius:8 }}>
+              <span style={{ color:C.coral, fontSize:'0.68rem', fontFamily:D.body, fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase' }}>My Ride</span>
+              <span style={{ width:1, height:12, background:'rgba(239,131,84,0.4)' }} />
+              <span style={{ fontFamily:D.display, fontWeight:700, fontSize:'0.95rem', color:C.text }}>{vehicle.year} {vehicle.make} {vehicle.model}</span>
             </motion.div>
           )}
 
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* CTAs */}
+          <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.62 }}
+            style={{ display:'flex', gap:'1rem', marginTop:'2.25rem', alignItems:'center', flexWrap:'wrap' }}>
             <button onClick={() => navigate('/app/explore')}
-              style={{ fontFamily: D.display, fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.15em', textTransform: 'uppercase', background: C.red, color: C.light, border: 'none', padding: '1rem 2.5rem', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = C.redDim}
-              onMouseLeave={e => e.currentTarget.style.background = C.red}>
-              Claim Your Garage
+              style={{ fontFamily:D.body, fontWeight:700, fontSize:'0.9rem', letterSpacing:'0.06em', background:C.coral, color:'#fff', border:'none', padding:'0.95rem 2.4rem', cursor:'pointer', borderRadius:10, display:'flex', alignItems:'center', gap:'0.5rem', boxShadow:`0 8px 28px rgba(239,131,84,0.35)`, transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background=C.coralDim; e.currentTarget.style.transform='translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.background=C.coral;    e.currentTarget.style.transform='translateY(0)' }}>
+              Claim Your Garage <ChevronRight size={16} />
             </button>
             <button onClick={() => navigate('/app/explore')}
-              style={{ fontFamily: D.display, fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'transparent', color: C.light, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.75 }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '0.75'}>
-              <span style={{ color: C.red }}>▶</span> See What's Inside
+              style={{ fontFamily:D.body, fontWeight:600, fontSize:'0.9rem', letterSpacing:'0.04em', background:'transparent', color:C.textSoft, border:`1px solid ${C.border}`, padding:'0.95rem 1.75rem', cursor:'pointer', borderRadius:10, display:'flex', alignItems:'center', gap:'0.5rem', transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(239,131,84,0.5)'; e.currentTarget.style.color=C.text }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor=C.border; e.currentTarget.style.color=C.textSoft }}>
+              <span style={{ color:C.coral, fontSize:'0.8rem' }}>▶</span> See What's Inside
             </button>
           </motion.div>
         </div>
       </section>
 
-      {/* ── TICKER ── */}
-      <div style={{ background: C.red, overflow: 'hidden', padding: '0.7rem 0', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', whiteSpace: 'nowrap', animation: 'ticker 22s linear infinite' }}>
+      {/* ══════════════════════════════════════
+          TICKER
+      ══════════════════════════════════════ */}
+      <div style={{ background:C.coral, overflow:'hidden', padding:'0.75rem 0', position:'relative', zIndex:1 }}>
+        <div style={{ display:'flex', whiteSpace:'nowrap', animation:'ticker 24s linear infinite' }}>
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-            <div key={i} style={{ fontFamily: D.display, fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.dark, padding: '0 2rem', display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
-              {item} <span style={{ opacity: 0.5 }}>✦</span>
+            <div key={i} style={{ fontFamily:D.body, fontSize:'0.78rem', fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase', color:C.bg, padding:'0 2.25rem', display:'inline-flex', alignItems:'center', gap:'1rem' }}>
+              {item} <span style={{ opacity:0.45 }}>✦</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── FEATURES ── */}
-      <section style={{ padding: '8rem 3rem', background: C.black, position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'end', marginBottom: '5rem' }}>
+      {/* ══════════════════════════════════════
+          FEATURES
+      ══════════════════════════════════════ */}
+      <section style={{ padding:'8rem 4rem', background:'#1a1c2a', position:'relative', zIndex:1 }}>
+        <div style={{ maxWidth:1400, margin:'0 auto' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'4rem', alignItems:'end', marginBottom:'5rem' }}>
             <div>
-              <SectionLabel>Everything You Need</SectionLabel>
-              <SectionTitle>BUILT FOR<br />GEARHEADS<br /><span style={{ color: C.red }}>BY GEARHEADS</span></SectionTitle>
+              <Label>Everything You Need</Label>
+              <h2 style={{ fontFamily:D.headline, fontSize:'clamp(2.5rem,6vw,5rem)', lineHeight:0.92, letterSpacing:'0.03em', color:C.text }}>
+                BUILT FOR<br />GEARHEADS<br />
+                <span style={{ color:C.coral }}>BY GEARHEADS</span>
+              </h2>
             </div>
-            <p style={{ fontFamily: D.body, fontSize: '1rem', lineHeight: 1.7, color: C.muted, maxWidth: 480 }}>
+            <p style={{ fontFamily:D.body, fontSize:'1rem', lineHeight:1.75, color:C.muted, maxWidth:480 }}>
               Six core pillars that cover everything from showcasing your build to finding the rarest OEM parts. This isn't Instagram with car filters — this is the real thing.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(141,153,174,0.15)', border: '1px solid rgba(141,153,174,0.15)' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1px', background:`rgba(191,192,192,0.1)`, border:`1px solid rgba(191,192,192,0.1)`, borderRadius:2 }}>
             {FEATURES.map(f => <FeatureCard key={f.n} {...f} />)}
           </div>
         </div>
       </section>
 
-      <div style={{ height: 1, background: `linear-gradient(to right, transparent, ${C.red}, transparent)`, opacity: 0.4, position: 'relative', zIndex: 1 }} />
+      {/* Divider */}
+      <div style={{ height:1, background:`linear-gradient(to right, transparent, ${C.coral}, transparent)`, opacity:0.35, position:'relative', zIndex:1 }} />
 
-      {/* ── GARAGE MOCKUP ── */}
-      <section style={{ padding: '8rem 3rem', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center' }}>
-          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ position: 'relative' }}>
-            <div style={{ background: C.card, border: '1px solid rgba(141,153,174,0.2)', borderTop: `3px solid ${C.red}`, padding: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(141,153,174,0.15)' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.red }} />
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f39c12' }} />
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#27ae60' }} />
-                <span style={{ fontFamily: D.display, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: C.muted, marginLeft: '0.5rem' }}>Your Virtual Garage</span>
+      {/* ══════════════════════════════════════
+          GARAGE MOCKUP
+      ══════════════════════════════════════ */}
+      <section style={{ padding:'8rem 4rem', background:C.bg, position:'relative', zIndex:1, overflow:'hidden' }}>
+        {/* Soft ambient glow */}
+        <div style={{ position:'absolute', top:'30%', left:'50%', width:600, height:600, borderRadius:'50%', background:`radial-gradient(circle, rgba(239,131,84,0.05) 0%, transparent 70%)`, transform:'translateX(-50%)', pointerEvents:'none' }} />
+
+        <div style={{ maxWidth:1400, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6rem', alignItems:'center', position:'relative', zIndex:1 }}>
+
+          {/* Mockup card */}
+          <motion.div initial={{ opacity:0, y:40 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} style={{ position:'relative' }}>
+            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderTop:`3px solid ${C.coral}`, borderRadius:16, padding:'1.5rem', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
+              {/* Window chrome dots */}
+              <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'1.5rem', paddingBottom:'1rem', borderBottom:`1px solid ${C.border}` }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#ef4444' }} />
+                <div style={{ width:8, height:8, borderRadius:'50%', background:C.amber }} />
+                <div style={{ width:8, height:8, borderRadius:'50%', background:C.green }} />
+                <span style={{ fontFamily:D.body, fontSize:'0.72rem', letterSpacing:'0.12em', textTransform:'uppercase', color:C.muted, marginLeft:'0.5rem' }}>Virtual Garage</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: `linear-gradient(135deg, ${C.red}, #f39c12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: D.display, fontSize: '1.2rem', fontWeight: 900, color: C.dark, flexShrink: 0 }}>
+              {/* Avatar + name */}
+              <div style={{ display:'flex', alignItems:'center', gap:'1rem', marginBottom:'1.5rem' }}>
+                <div style={{ width:50, height:50, borderRadius:'50%', background:`linear-gradient(135deg, ${C.coral}, ${C.amber})`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontSize:'1.2rem', fontWeight:700, color:C.bg, flexShrink:0 }}>
                   {username[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontFamily: D.display, fontSize: '1rem', fontWeight: 700, color: C.light }}>{username}</div>
-                  <div style={{ fontFamily: D.display, fontSize: '0.7rem', color: C.muted, marginTop: '0.1rem' }}>@{username.toLowerCase()} · Bengaluru, KA</div>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
-                    {['✓ Verified', '★ Build King'].map(b => (
-                      <span key={b} style={{ fontFamily: D.display, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.15rem 0.5rem', border: `1px solid ${b.includes('✓') ? C.red : '#f39c12'}`, color: b.includes('✓') ? C.red : '#f39c12' }}>{b}</span>
+                  <div style={{ fontFamily:D.display, fontSize:'1rem', fontWeight:700, color:C.text }}>{username}</div>
+                  <div style={{ fontFamily:D.body, fontSize:'0.7rem', color:C.muted, marginTop:'0.1rem' }}>@{username.toLowerCase()} · Bengaluru, KA</div>
+                  <div style={{ display:'flex', gap:'0.4rem', marginTop:'0.4rem' }}>
+                    {[['✓ Verified', C.green],['★ Build King', C.amber]].map(([label, color]) => (
+                      <span key={label} style={{ fontFamily:D.body, fontSize:'0.6rem', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0.15rem 0.5rem', border:`1px solid ${color}55`, color, borderRadius:5 }}>{label}</span>
                     ))}
                   </div>
                 </div>
               </div>
-              <div style={{ fontFamily: D.display, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: C.muted, marginBottom: '0.8rem' }}>My Machines</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {/* Vehicles */}
+              <div style={{ fontFamily:D.body, fontSize:'0.66rem', letterSpacing:'0.18em', textTransform:'uppercase', color:C.muted, marginBottom:'0.75rem' }}>My Machines</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.65rem' }}>
                 {[
-                  { model: 'Honda Civic', year: 'EK9 · 1998', mods: '⚡ 14 Mods', active: true },
-                  { model: 'KTM Duke', year: '390 · 2022', mods: '🔧 6 Mods', active: false },
-                  { model: 'Maruti Swift', year: 'Sport · 2019', mods: '🔧 3 Mods', active: false },
-                ].map(({ model, year, mods, active }) => (
-                  <div key={model} style={{ background: 'rgba(141,153,174,0.1)', padding: '1rem', borderLeft: `2px solid ${active ? '#f39c12' : C.red}` }}>
-                    <div style={{ fontFamily: D.display, fontWeight: 700, color: C.light, fontSize: '0.9rem' }}>{model}</div>
-                    <div style={{ fontFamily: D.display, fontSize: '0.7rem', color: C.muted, marginTop: '0.2rem' }}>{year}</div>
-                    <div style={{ fontFamily: D.body, fontSize: '0.75rem', color: C.steel, marginTop: '0.4rem' }}>{mods}</div>
+                  { model:'Honda Civic', year:'EK9 · 1998', mods:'14 Mods', color:C.coral },
+                  { model:'KTM Duke',    year:'390 · 2022',  mods:'6 Mods',  color:C.amber },
+                  { model:'Maruti Swift',year:'Sport · 2019',mods:'3 Mods',  color:C.green },
+                ].map(({ model, year, mods, color }) => (
+                  <div key={model} style={{ background:C.surface2, padding:'0.9rem 1rem', borderLeft:`2px solid ${color}`, borderRadius:8 }}>
+                    <div style={{ fontFamily:D.body, fontWeight:700, color:C.text, fontSize:'0.88rem' }}>{model}</div>
+                    <div style={{ fontFamily:D.body, fontSize:'0.7rem', color:C.muted, marginTop:'0.15rem' }}>{year}</div>
+                    <div style={{ fontFamily:D.body, fontSize:'0.72rem', color, marginTop:'0.3rem', fontWeight:600 }}>⚡ {mods}</div>
                   </div>
                 ))}
-                <div style={{ padding: '1rem', border: '1px dashed rgba(141,153,174,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontFamily: D.display, fontSize: '0.75rem', color: C.muted, letterSpacing: '0.1em' }}>+ Add Vehicle</div>
+                <div style={{ padding:'0.9rem 1rem', border:`1px dashed rgba(191,192,192,0.2)`, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor='rgba(239,131,84,0.4)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor='rgba(191,192,192,0.2)'}>
+                  <span style={{ fontFamily:D.body, fontSize:'0.78rem', color:C.muted }}>+ Add Vehicle</span>
                 </div>
               </div>
-              <div style={{ marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid rgba(141,153,174,0.15)', display: 'flex', gap: '2rem' }}>
-                {[['247', 'Followers'], ['84', 'Posts'], ['12', 'Badges']].map(([v, l]) => (
+              {/* Stats */}
+              <div style={{ marginTop:'1.25rem', paddingTop:'1rem', borderTop:`1px solid ${C.border}`, display:'flex', gap:'2rem' }}>
+                {[['247','Followers'],['84','Posts'],['12','Badges']].map(([v, l]) => (
                   <div key={l}>
-                    <div style={{ fontFamily: D.display, fontSize: '1.2rem', fontWeight: 900, color: l === 'Badges' ? '#f39c12' : C.light }}>{v}</div>
-                    <div style={{ fontFamily: D.display, fontSize: '0.7rem', color: C.muted }}>{l}</div>
+                    <div style={{ fontFamily:D.display, fontSize:'1.25rem', fontWeight:700, color: l==='Badges' ? C.amber : C.text }}>{v}</div>
+                    <div style={{ fontFamily:D.body, fontSize:'0.68rem', color:C.muted }}>{l}</div>
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{ position: 'absolute', bottom: -12, right: -12, width: 60, height: 60, borderRight: `3px solid ${C.red}`, borderBottom: `3px solid ${C.red}`, zIndex: -1 }} />
-            <div style={{ position: 'absolute', top: -12, left: -12, width: 60, height: 60, borderLeft: '3px solid rgba(141,153,174,0.3)', borderTop: '3px solid rgba(141,153,174,0.3)', zIndex: -1 }} />
+            {/* Corner accents */}
+            <div style={{ position:'absolute', bottom:-12, right:-12, width:56, height:56, borderRight:`2px solid ${C.coral}`, borderBottom:`2px solid ${C.coral}`, zIndex:-1, borderRadius:'0 0 4px 0' }} />
+            <div style={{ position:'absolute', top:-12, left:-12, width:56, height:56, borderLeft:'2px solid rgba(191,192,192,0.25)', borderTop:'2px solid rgba(191,192,192,0.25)', zIndex:-1, borderRadius:'4px 0 0 0' }} />
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-            <SectionLabel>Virtual Garage</SectionLabel>
-            <SectionTitle>YOUR CARS<br />GET THEIR<br /><span style={{ color: C.red }}>OWN STORY</span></SectionTitle>
-            <p style={{ fontFamily: D.body, fontSize: '1rem', lineHeight: 1.7, color: C.muted, marginTop: '1.5rem' }}>
+          {/* Copy */}
+          <motion.div initial={{ opacity:0, y:40 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ delay:0.2 }}>
+            <Label>Virtual Garage</Label>
+            <h2 style={{ fontFamily:D.headline, fontSize:'clamp(2.5rem,6vw,5rem)', lineHeight:0.92, letterSpacing:'0.03em', color:C.text }}>
+              YOUR CARS<br />GET THEIR<br /><span style={{ color:C.coral }}>OWN STORY</span>
+            </h2>
+            <p style={{ fontFamily:D.body, fontSize:'1rem', lineHeight:1.75, color:C.muted, marginTop:'1.5rem' }}>
               Every vehicle you own gets a dedicated sub-profile. Track every mod, document every milestone, and build a full transformation timeline that the community can follow.
             </p>
-            <ul style={{ marginTop: '2rem', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+            <ul style={{ marginTop:'2rem', listStyle:'none', display:'flex', flexDirection:'column', gap:'0.75rem' }}>
               {['Transformation timelines (Mods & General)', 'Full mod list with part specs', 'Verified ownership badges', 'Achievement & award system'].map(item => (
-                <li key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: D.display, fontSize: '1rem', fontWeight: 600, color: C.light }}>
-                  <span style={{ color: C.red }}>▸</span> {item}
+                <li key={item} style={{ display:'flex', alignItems:'center', gap:'0.75rem', fontFamily:D.body, fontSize:'0.95rem', fontWeight:500, color:C.textSoft }}>
+                  <span style={{ width:18, height:18, borderRadius:'50%', background:'rgba(239,131,84,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <ChevronRight size={11} color={C.coral} />
+                  </span>
+                  {item}
                 </li>
               ))}
             </ul>
@@ -274,115 +331,158 @@ export default function HeroSection() {
         </div>
       </section>
 
-      <div style={{ height: 1, background: `linear-gradient(to right, transparent, ${C.red}, transparent)`, opacity: 0.4, position: 'relative', zIndex: 1 }} />
+      {/* Divider */}
+      <div style={{ height:1, background:`linear-gradient(to right, transparent, ${C.coral}, transparent)`, opacity:0.35, position:'relative', zIndex:1 }} />
 
-      {/* ── MARKETPLACE ── */}
-      <section style={{ padding: '8rem 3rem', background: C.black, position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'end', marginBottom: '3rem' }}>
+      {/* ══════════════════════════════════════
+          MARKETPLACE
+      ══════════════════════════════════════ */}
+      <section style={{ padding:'8rem 4rem', background:'#1a1c2a', position:'relative', zIndex:1 }}>
+        <div style={{ maxWidth:1400, margin:'0 auto' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2rem', alignItems:'end', marginBottom:'3.5rem' }}>
             <div>
-              <SectionLabel>Buy &amp; Sell</SectionLabel>
-              <SectionTitle>THE<br /><span style={{ color: C.red }}>STRIP</span></SectionTitle>
+              <Label>Buy &amp; Sell</Label>
+              <h2 style={{ fontFamily:D.headline, fontSize:'clamp(2.5rem,6vw,5rem)', lineHeight:0.92, letterSpacing:'0.03em', color:C.text }}>
+                THE<br /><span style={{ color:C.coral }}>STRIP</span>
+              </h2>
             </div>
-            <p style={{ fontFamily: D.body, fontSize: '1rem', lineHeight: 1.7, color: C.muted }}>
+            <p style={{ fontFamily:D.body, fontSize:'1rem', lineHeight:1.75, color:C.muted }}>
               Cars. Parts. Everything classified by type. Community-trusted listings where sellers are as verified as the parts they're selling.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(141,153,174,0.15)' }}>
-            {MARKET_ITEMS.map(({ icon, name, price, tag }) => (
+
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1px', background:`rgba(191,192,192,0.1)`, borderRadius:2, overflow:'hidden' }}>
+            {MARKET_ITEMS.map(({ img, name, price, tag }) => (
               <div key={name}
-                style={{ background: C.card, padding: '2rem 1.5rem', borderTop: '3px solid transparent', transition: 'border-color 0.3s, background 0.3s', cursor: 'pointer' }}
-                onMouseEnter={e => { e.currentTarget.style.borderTopColor = C.red; e.currentTarget.style.background = '#2d3050' }}
-                onMouseLeave={e => { e.currentTarget.style.borderTopColor = 'transparent'; e.currentTarget.style.background = C.card }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{icon}</div>
-                <div style={{ fontFamily: D.display, fontSize: '1rem', fontWeight: 700, color: C.light, marginBottom: '0.4rem' }}>{name}</div>
-                <div style={{ fontFamily: D.display, fontSize: '1.5rem', fontWeight: 900, color: C.red, marginBottom: '0.4rem' }}>{price}</div>
-                <div style={{ fontFamily: D.display, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: C.muted }}>{tag}</div>
+                style={{ background:C.surface, padding:0, cursor:'pointer', transition:'background 0.25s', overflow:'hidden', position:'relative' }}
+                onMouseEnter={e => e.currentTarget.style.background=C.surface2}
+                onMouseLeave={e => e.currentTarget.style.background=C.surface}>
+                {/* Real car photo */}
+                <div style={{ height:160, overflow:'hidden', position:'relative' }}>
+                  <img src={img} alt={name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform 0.4s' }}
+                    onMouseEnter={e => e.currentTarget.style.transform='scale(1.06)'}
+                    onMouseLeave={e => e.currentTarget.style.transform='scale(1)'} />
+                  <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(42,47,64,0.9) 0%, transparent 55%)' }} />
+                </div>
+                {/* Info */}
+                <div style={{ padding:'1.1rem 1.25rem', borderTop:`2px solid transparent`, transition:'border-color 0.25s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderTopColor=C.coral}
+                  onMouseLeave={e => e.currentTarget.style.borderTopColor='transparent'}>
+                  <div style={{ fontFamily:D.body, fontSize:'0.92rem', fontWeight:700, color:C.text, marginBottom:'0.3rem' }}>{name}</div>
+                  <div style={{ fontFamily:D.headline, fontSize:'1.5rem', fontWeight:900, color:C.coral, marginBottom:'0.25rem' }}>{price}</div>
+                  <div style={{ fontFamily:D.body, fontSize:'0.7rem', letterSpacing:'0.1em', textTransform:'uppercase', color:C.muted }}>{tag}</div>
+                </div>
               </div>
             ))}
           </div>
-          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+
+          <div style={{ textAlign:'center', marginTop:'2.5rem' }}>
             <button onClick={() => navigate('/app/marketplace')}
-              style={{ fontFamily: D.display, fontWeight: 800, fontSize: '0.88rem', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'transparent', color: C.light, border: '1px solid rgba(237,242,244,0.25)', padding: '0.9rem 2.5rem', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = C.red}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(237,242,244,0.25)'}>
-              Browse All Listings →
+              style={{ fontFamily:D.body, fontWeight:600, fontSize:'0.88rem', letterSpacing:'0.06em', background:'transparent', color:C.text, border:`1px solid ${C.border}`, padding:'0.9rem 2.5rem', cursor:'pointer', borderRadius:10, display:'inline-flex', alignItems:'center', gap:'0.5rem', transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor=C.coral; e.currentTarget.style.color=C.coral }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor=C.border;  e.currentTarget.style.color=C.text }}>
+              Browse All Listings <ChevronRight size={15} />
             </button>
           </div>
         </div>
       </section>
 
-      <div style={{ height: 1, background: `linear-gradient(to right, transparent, ${C.red}, transparent)`, opacity: 0.4, position: 'relative', zIndex: 1 }} />
+      {/* Divider */}
+      <div style={{ height:1, background:`linear-gradient(to right, transparent, ${C.coral}, transparent)`, opacity:0.35, position:'relative', zIndex:1 }} />
 
-      {/* ── COMMUNITY ── */}
-      <section style={{ padding: '8rem 3rem', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '6rem', alignItems: 'start' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(141,153,174,0.15)' }}>
-            {COMMUNITY_CARDS.map(({ icon, name, desc, wide }) => (
+      {/* ══════════════════════════════════════
+          COMMUNITY
+      ══════════════════════════════════════ */}
+      <section style={{ padding:'8rem 4rem', background:C.bg, position:'relative', zIndex:1 }}>
+        <div style={{ maxWidth:1400, margin:'0 auto', display:'grid', gridTemplateColumns:'2fr 1fr', gap:'6rem', alignItems:'start' }}>
+
+          {/* Cards grid */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1px', background:`rgba(191,192,192,0.1)`, borderRadius:2, overflow:'hidden' }}>
+            {COMMUNITY_CARDS.map(({ Icon, name, desc, wide }) => (
               <div key={name}
-                style={{ background: C.card, padding: '2rem 1.8rem', gridColumn: wide ? 'span 2' : 'span 1', borderTop: '3px solid transparent', transition: 'border-color 0.3s' }}
-                onMouseEnter={e => e.currentTarget.style.borderTopColor = C.red}
-                onMouseLeave={e => e.currentTarget.style.borderTopColor = 'transparent'}>
-                <div style={{ fontSize: '1.8rem', marginBottom: '0.8rem' }}>{icon}</div>
-                <div style={{ fontFamily: D.display, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.light, marginBottom: '0.5rem' }}>{name}</div>
-                <p style={{ fontFamily: D.body, fontSize: '0.875rem', lineHeight: 1.6, color: C.muted }}>{desc}</p>
+                style={{ background:C.surface, padding:'2rem 1.75rem', gridColumn: wide ? 'span 2' : 'span 1', borderTop:'2px solid transparent', transition:'all 0.25s', cursor:'default' }}
+                onMouseEnter={e => { e.currentTarget.style.borderTopColor=C.coral; e.currentTarget.style.background=C.surface2 }}
+                onMouseLeave={e => { e.currentTarget.style.borderTopColor='transparent'; e.currentTarget.style.background=C.surface }}>
+                <div style={{ width:40, height:40, borderRadius:11, background:'rgba(239,131,84,0.1)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1rem' }}>
+                  <Icon size={18} color={C.coral} />
+                </div>
+                <div style={{ fontFamily:D.body, fontSize:'0.95rem', fontWeight:700, color:C.text, marginBottom:'0.5rem' }}>{name}</div>
+                <p style={{ fontFamily:D.body, fontSize:'0.85rem', lineHeight:1.65, color:C.muted }}>{desc}</p>
               </div>
             ))}
           </div>
-          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-            <SectionLabel>Community</SectionLabel>
-            <SectionTitle>THE<br />SCENE<br /><span style={{ color: C.red }}>IS HERE</span></SectionTitle>
-            <p style={{ fontFamily: D.body, fontSize: '1rem', lineHeight: 1.7, color: C.muted, marginTop: '1.5rem' }}>
+
+          {/* Copy */}
+          <motion.div initial={{ opacity:0, x:30 }} whileInView={{ opacity:1, x:0 }} viewport={{ once:true }}>
+            <Label>Community</Label>
+            <h2 style={{ fontFamily:D.headline, fontSize:'clamp(2.5rem,6vw,5rem)', lineHeight:0.92, letterSpacing:'0.03em', color:C.text }}>
+              THE<br />SCENE<br /><span style={{ color:C.coral }}>IS HERE</span>
+            </h2>
+            <p style={{ fontFamily:D.body, fontSize:'1rem', lineHeight:1.75, color:C.muted, marginTop:'1.5rem' }}>
               Online or offline. Digital or tarmac. Find your crew, organise the meet, and chase down the perfect spot.
             </p>
             <button onClick={() => navigate('/app/community')}
-              style={{ marginTop: '2rem', fontFamily: D.display, fontWeight: 800, fontSize: '0.88rem', letterSpacing: '0.15em', textTransform: 'uppercase', background: C.red, color: C.light, border: 'none', padding: '0.9rem 2rem', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = C.redDim}
-              onMouseLeave={e => e.currentTarget.style.background = C.red}>
-              Join The Scene →
+              style={{ marginTop:'2rem', fontFamily:D.body, fontWeight:700, fontSize:'0.9rem', letterSpacing:'0.04em', background:C.coral, color:'#fff', border:'none', padding:'0.9rem 2rem', cursor:'pointer', borderRadius:10, display:'flex', alignItems:'center', gap:'0.5rem', transition:'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background=C.coralDim; e.currentTarget.style.transform='translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.background=C.coral;    e.currentTarget.style.transform='translateY(0)' }}>
+              Join The Scene <ChevronRight size={16} />
             </button>
           </motion.div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section style={{ padding: '10rem 3rem', textAlign: 'center', position: 'relative', overflow: 'hidden', background: C.black, zIndex: 1 }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: D.display, fontSize: 'clamp(10rem,28vw,24rem)', color: 'rgba(255,255,255,0.02)', whiteSpace: 'nowrap', pointerEvents: 'none', lineHeight: 1, fontWeight: 900 }}>
-          JOIN
+      {/* ══════════════════════════════════════
+          CTA
+      ══════════════════════════════════════ */}
+      <section style={{ padding:'10rem 4rem', textAlign:'center', position:'relative', overflow:'hidden', background:'#1a1c2a', zIndex:1 }}>
+        {/* Ghost wordmark */}
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', fontFamily:D.headline, fontSize:'clamp(8rem,22vw,20rem)', fontWeight:900, color:'rgba(255,255,255,0.018)', whiteSpace:'nowrap', pointerEvents:'none', lineHeight:1 }}>
+          TORQUEGRID
         </div>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontFamily: D.display, fontSize: '0.8rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: C.red, marginBottom: '1.5rem' }}>The garage is open</div>
-          <h2 style={{ fontFamily: D.display, fontSize: 'clamp(3rem,9vw,8rem)', lineHeight: 0.9, fontWeight: 900, color: C.light, marginBottom: '2rem' }}>
-            PARK<br />YOUR<br />BUILD HERE
+        {/* Ambient glow */}
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:400, height:400, borderRadius:'50%', background:`radial-gradient(circle, rgba(239,131,84,0.08) 0%, transparent 70%)`, pointerEvents:'none' }} />
+
+        <div style={{ position:'relative', zIndex:1 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:'0.6rem', padding:'0.35rem 1rem', background:'rgba(239,131,84,0.1)', border:`1px solid rgba(239,131,84,0.3)`, borderRadius:40, marginBottom:'2rem' }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:C.coral, boxShadow:`0 0 6px ${C.coral}` }} />
+            <span style={{ fontFamily:D.body, fontSize:'0.75rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase', color:C.coral }}>The Garage Is Open</span>
+          </div>
+
+          <h2 style={{ fontFamily:D.headline, fontSize:'clamp(3rem,9vw,8rem)', lineHeight:0.9, fontWeight:900, color:C.text, marginBottom:'2rem' }}>
+            PARK<br />YOUR<br /><span style={{ color:C.coral }}>BUILD HERE</span>
           </h2>
-          <p style={{ fontFamily: D.display, fontSize: '1.1rem', color: C.muted, marginBottom: '3rem', letterSpacing: '0.05em' }}>
+
+          <p style={{ fontFamily:D.body, fontSize:'1.1rem', color:C.muted, marginBottom:'3rem', lineHeight:1.65, maxWidth:480, margin:'0 auto 3rem' }}>
             Free to join. No algorithms hiding your content. Just the community.
           </p>
+
           <button onClick={() => navigate('/app/explore')}
-            style={{ fontFamily: D.display, fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.15em', textTransform: 'uppercase', background: C.red, color: C.light, border: 'none', padding: '1.1rem 3rem', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = C.redDim}
-            onMouseLeave={e => e.currentTarget.style.background = C.red}>
-            Create Your Garage — Free
+            style={{ fontFamily:D.body, fontWeight:700, fontSize:'1rem', letterSpacing:'0.06em', background:C.coral, color:'#fff', border:'none', padding:'1.1rem 3rem', cursor:'pointer', borderRadius:12, display:'inline-flex', alignItems:'center', gap:'0.5rem', boxShadow:`0 12px 40px rgba(239,131,84,0.35)`, transition:'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background=C.coralDim; e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow=`0 18px 50px rgba(239,131,84,0.45)` }}
+            onMouseLeave={e => { e.currentTarget.style.background=C.coral;    e.currentTarget.style.transform='translateY(0)';   e.currentTarget.style.boxShadow=`0 12px 40px rgba(239,131,84,0.35)` }}>
+            Create Your Garage — Free <ChevronRight size={18} />
           </button>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ background: C.card, borderTop: '1px solid rgba(141,153,174,0.15)', padding: '2.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1 }}>
-        <div style={{ fontFamily: D.display, fontSize: '1.8rem', fontWeight: 900, letterSpacing: '0.06em', color: C.light }}>
-          TORQUE<span style={{ color: C.red }}>GRID</span>
+      {/* ══════════════════════════════════════
+          FOOTER
+      ══════════════════════════════════════ */}
+      <footer style={{ background:C.surface, borderTop:`1px solid ${C.border}`, padding:'2.5rem 4rem', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'1rem', position:'relative', zIndex:1 }}>
+        <div style={{ fontFamily:D.headline, fontSize:'1.8rem', fontWeight:900, letterSpacing:'0.06em', color:C.text }}>
+          TORQUE<span style={{ color:C.coral }}>GRID</span>
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          {['explore', 'community', 'marketplace', 'knowledge', 'services'].map(l => (
+        <div style={{ display:'flex', gap:'2rem' }}>
+          {['explore','community','marketplace','knowledge','services'].map(l => (
             <button key={l} onClick={() => navigate(`/app/${l}`)}
-              style={{ fontFamily: D.display, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.muted, background: 'none', border: 'none', cursor: 'pointer' }}
-              onMouseEnter={e => e.target.style.color = C.light}
-              onMouseLeave={e => e.target.style.color = C.muted}>
+              style={{ fontFamily:D.body, fontSize:'0.78rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:C.muted, background:'none', border:'none', cursor:'pointer', transition:'color 0.2s' }}
+              onMouseEnter={e => e.target.style.color=C.text}
+              onMouseLeave={e => e.target.style.color=C.muted}>
               {l}
             </button>
           ))}
         </div>
-        <div style={{ fontFamily: D.display, fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(141,153,174,0.5)' }}>© 2026 TorqueGrid. All rights reserved.</div>
+        <div style={{ fontFamily:D.body, fontSize:'0.72rem', color:'rgba(139,144,160,0.5)' }}>© 2026 TorqueGrid. All rights reserved.</div>
       </footer>
 
     </div>
