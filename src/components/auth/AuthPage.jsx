@@ -3,12 +3,18 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
+/* Carbon theme. These resolve to the same custom properties the rest of the
+   app uses, so the auth screen follows the light/dark switch instead of
+   staying locked to dark. `coral` is aliased to the accent so the existing
+   markup picks up the palette without a rename pass; `coralSolid` is the
+   deeper fill reserved for surfaces carrying white text (AA). */
 const C = {
-  bg:'#1f2230', surface:'#2a2f40', surface2:'#353b50',
-  coral:'#EF8354', coralDim:'#d96a3a',
-  text:'#EDEEF0', textSoft:'#BFC0C0', textMuted:'#8b90a0',
-  border:'rgba(191,192,192,0.14)', borderFocus:'rgba(239,131,84,0.5)',
-  green:'#5eaa7e', red:'#ef4444',
+  bg:'var(--bg)', surface:'var(--surface)', surface2:'var(--surface-2)',
+  coral:'var(--accent)', coralDim:'var(--accent-solid-hi)', coralSolid:'var(--accent-solid)',
+  text:'var(--text)', textSoft:'var(--text-soft)', textMuted:'var(--text-muted)',
+  border:'var(--border)', borderFocus:'var(--accent-br)',
+  accentBg:'var(--accent-bg)', dangerBg:'var(--danger-bg)',
+  green:'var(--success)', red:'var(--danger)',
 }
 const D = { display:"'Space Grotesk', sans-serif", body:"'Inter', sans-serif" }
 
@@ -35,7 +41,7 @@ function InputField({ label, type='text', value, onChange, placeholder, suffix, 
           style={{
             width:'100%', padding: suffix ? '0.85rem 3rem 0.85rem 1rem' : '0.85rem 1rem',
             background:C.surface2, border:`1.5px solid ${focused ? C.coral : error ? C.red : C.border}`,
-            borderRadius:12, color:C.text, fontFamily:D.body, fontSize:'0.95rem',
+            borderRadius:12, color:C.text, fontFamily:D.body, fontSize:'1rem',
             outline:'none', transition:'border-color 0.2s',
             boxSizing:'border-box',
           }}
@@ -60,7 +66,7 @@ function SelectField({ label, value, onChange, options, error }) {
       </label>
       <select value={value} onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ width:'100%', padding:'0.85rem 1rem', background:C.surface2, border:`1.5px solid ${focused ? C.coral : error ? C.red : C.border}`, borderRadius:12, color: value ? C.text : C.textMuted, fontFamily:D.body, fontSize:'0.95rem', outline:'none', cursor:'pointer', transition:'border-color 0.2s' }}>
+        style={{ width:'100%', padding:'0.85rem 1rem', background:C.surface2, border:`1.5px solid ${focused ? C.coral : error ? C.red : C.border}`, borderRadius:12, color: value ? C.text : C.textMuted, fontFamily:D.body, fontSize:'1rem', outline:'none', cursor:'pointer', transition:'border-color 0.2s' }}>
         <option value="">Select...</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -72,9 +78,9 @@ function SelectField({ label, value, onChange, options, error }) {
 function SubmitBtn({ loading, label, icon }) {
   return (
     <button type="submit" disabled={loading}
-      style={{ width:'100%', padding:'0.95rem', background: loading ? C.surface2 : C.coral, border:'none', borderRadius:12, color: loading ? C.textMuted : '#fff', fontFamily:D.body, fontWeight:700, fontSize:'0.95rem', cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem', transition:'background 0.2s' }}
+      style={{ width:'100%', padding:'0.95rem', backgroundColor: loading ? C.surface2 : C.coralSolid, border:'none', borderRadius:12, color: loading ? C.textMuted : '#fff', fontFamily:D.body, fontWeight:700, fontSize:'0.95rem', cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem', transition:'background-color 0.2s' }}
       onMouseEnter={e => { if (!loading) e.currentTarget.style.background=C.coralDim }}
-      onMouseLeave={e => { if (!loading) e.currentTarget.style.background=C.coral }}>
+      onMouseLeave={e => { if (!loading) e.currentTarget.style.background=C.coralSolid }}>
       {loading ? (
         <div style={{ width:18, height:18, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
       ) : <>{label} {icon}</>}
@@ -84,7 +90,7 @@ function SubmitBtn({ loading, label, icon }) {
 
 function StepDot({ n, active, done }) {
   return (
-    <div style={{ width:30, height:30, borderRadius:'50%', background: done ? C.green : active ? C.coral : C.surface2, border:`2px solid ${done ? C.green : active ? C.coral : C.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.8rem', color: done || active ? '#fff' : C.textMuted, transition:'all 0.3s', flexShrink:0 }}>
+    <div style={{ width:30, height:30, borderRadius:'50%', backgroundColor: done ? C.green : active ? C.coralSolid : C.surface2, border:`2px solid ${done ? C.green : active ? C.coral : C.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.8rem', color: done || active ? '#fff' : C.textMuted, transition:'background-color 0.3s, border-color 0.3s, color 0.3s', flexShrink:0 }}>
       {done ? '✓' : n}
     </div>
   )
@@ -95,13 +101,15 @@ export default function AuthPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
+  const [resetState, setResetState] = useState('idle')   // idle | sending | sent | error
+  const [resetError, setResetError] = useState('')
 
   const [form, setForm] = useState({
     email:'', password:'', confirmPassword:'', username:'',
     vehicleMake:'', vehicleModel:'', vehicleYear:'', vehicleType:'car'
   })
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, resetPassword } = useAuth()
   const navigate = useNavigate()
 
   const u = (k, v) => {
@@ -136,6 +144,17 @@ export default function AuthPage() {
     if (!form.vehicleYear || form.vehicleYear < 1950 || form.vehicleYear > 2026) e.vehicleYear = 'Enter a valid year'
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  const handleForgot = async () => {
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) {
+      setErrors(e => ({ ...e, email: 'Enter your email first, then tap reset' }))
+      return
+    }
+    setResetState('sending')
+    const { error } = await resetPassword(form.email)
+    if (error) { setResetError(error.message); setResetState('error') }
+    else setResetState('sent')
   }
 
   const handleLogin = async (e) => {
@@ -178,13 +197,13 @@ export default function AuthPage() {
       <div style={{ width:'52%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'3rem', position:'relative', overflow:'hidden', background:'linear-gradient(145deg, #1a1c2a 0%, #2D3142 60%, #1f2230 100%)' }}>
 
         {/* Background decoration */}
-        <div style={{ position:'absolute', top:-100, right:-100, width:400, height:400, borderRadius:'50%', background:'rgba(239,131,84,0.06)', pointerEvents:'none' }} />
-        <div style={{ position:'absolute', bottom:-80, left:-80, width:300, height:300, borderRadius:'50%', background:'rgba(79,93,117,0.15)', pointerEvents:'none' }} />
-        <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(191,192,192,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(191,192,192,0.03) 1px, transparent 1px)', backgroundSize:'40px 40px', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', top:-100, right:-100, width:400, height:400, borderRadius:'50%', background:'rgba(76,141,255,0.07)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:-80, left:-80, width:300, height:300, borderRadius:'50%', background:'rgba(76,141,255,0.05)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize:'40px 40px', pointerEvents:'none' }} />
 
         {/* Logo */}
         <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:'0.75rem' }}>
-          <div style={{ width:36, height:36, borderRadius:10, background:C.coral, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:36, height:36, borderRadius:10, background:C.coralSolid, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M3 13 L9 3 L15 13" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M5 13 L13 13" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -208,7 +227,7 @@ export default function AuthPage() {
           </p>
 
           {/* Stats */}
-          <div style={{ display:'flex', gap:'2.5rem', paddingTop:'2rem', borderTop:'1px solid rgba(191,192,192,0.1)' }}>
+          <div style={{ display:'flex', gap:'2.5rem', paddingTop:'2rem', borderTop:'1px solid var(--surface-3)' }}>
             {[['50K+','Enthusiasts'],['120K+','Vehicles'],['340+','Live Events']].map(([num, label]) => (
               <div key={label}>
                 <div style={{ fontFamily:D.display, fontSize:'1.8rem', fontWeight:700, color:C.coral, lineHeight:1 }}>{num}</div>
@@ -221,7 +240,7 @@ export default function AuthPage() {
         {/* Tags */}
         <div style={{ position:'relative', zIndex:1, display:'flex', gap:'0.5rem', flexWrap:'wrap' }}>
           {['F1 2026','MotoGP','JDM','Drift','Track Days','Meetups','Mods'].map(tag => (
-            <span key={tag} style={{ fontFamily:D.body, fontSize:'0.75rem', fontWeight:500, padding:'0.3rem 0.75rem', background:'rgba(191,192,192,0.06)', border:'1px solid rgba(191,192,192,0.1)', borderRadius:20, color:C.textMuted }}>
+            <span key={tag} style={{ fontFamily:D.body, fontSize:'0.75rem', fontWeight:500, padding:'0.3rem 0.75rem', background:'rgba(191,192,192,0.06)', border:'1px solid var(--surface-3)', borderRadius:20, color:C.textMuted }}>
               {tag}
             </span>
           ))}
@@ -245,14 +264,17 @@ export default function AuthPage() {
                 <InputField label="Password" type={showPass ? 'text' : 'password'} value={form.password} onChange={v => u('password', v)} placeholder="Your password"
                   error={errors.password}
                   suffix={
-                    <button type="button" onClick={() => setShowPass(!showPass)} style={{ background:'none', border:'none', cursor:'pointer', color:C.textMuted, display:'flex', alignItems:'center' }}>
+                    <button type="button" onClick={() => setShowPass(!showPass)}
+                      aria-label={showPass ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPass}
+                      style={{ width:44, height:44, margin:'0 -0.75rem', background:'none', border:'none', cursor:'pointer', color:C.textMuted, display:'flex', alignItems:'center', justifyContent:'center' }}>
                       {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   } />
               </div>
 
               {errors.general && (
-                <div style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, padding:'0.75rem 1rem', fontFamily:D.body, fontSize:'0.85rem', color:C.red }}>
+                <div style={{ background:C.dangerBg, border:`1px solid ${C.red}40`, borderRadius:10, padding:'0.75rem 1rem', fontFamily:D.body, fontSize:'0.85rem', color:C.red }}>
                   {errors.general}
                 </div>
               )}
@@ -260,9 +282,20 @@ export default function AuthPage() {
               <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
                 <SubmitBtn loading={loading} label="Sign In" icon="→" />
                 <div style={{ textAlign:'center' }}>
-                  <button type="button" style={{ fontFamily:D.body, fontSize:'0.82rem', color:C.textMuted, background:'none', border:'none', cursor:'pointer' }}>
-                    Forgot password?
+                  <button type="button" onClick={handleForgot} disabled={resetState === 'sending'}
+                    style={{ fontFamily:D.body, fontSize:'0.82rem', color:C.textMuted, background:'none', border:'none', cursor: resetState === 'sending' ? 'default' : 'pointer', minHeight:44, padding:'0 0.75rem' }}>
+                    {resetState === 'sending' ? 'Sending…' : 'Forgot password?'}
                   </button>
+                  {resetState === 'sent' && (
+                    <div style={{ fontFamily:D.body, fontSize:'0.78rem', color:C.green, marginTop:'0.25rem' }}>
+                      Reset link sent — check your inbox.
+                    </div>
+                  )}
+                  {resetState === 'error' && (
+                    <div style={{ fontFamily:D.body, fontSize:'0.78rem', color:C.red, marginTop:'0.25rem' }}>
+                      {resetError}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -283,9 +316,9 @@ export default function AuthPage() {
               <div>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.5rem' }}>
                   <StepDot n="1" active={true} done={false} />
-                  <div style={{ flex:1, height:2, background:`linear-gradient(to right, ${C.coral}, rgba(191,192,192,0.15))`, borderRadius:1 }} />
+                  <div style={{ flex:1, height:2, background:`linear-gradient(to right, ${C.coral}, var(--border-mid))`, borderRadius:1 }} />
                   <StepDot n="2" active={false} done={false} />
-                  <div style={{ flex:1, height:2, background:'rgba(191,192,192,0.1)', borderRadius:1 }} />
+                  <div style={{ flex:1, height:2, background:'var(--surface-3)', borderRadius:1 }} />
                   <StepDot n="3" active={false} done={false} />
                 </div>
                 <h2 style={{ fontFamily:D.display, fontSize:'2rem', fontWeight:700, color:C.text, lineHeight:1, marginBottom:'0.4rem', letterSpacing:'-0.02em' }}>Create account</h2>
@@ -298,7 +331,10 @@ export default function AuthPage() {
                 <InputField label="Password" type={showPass ? 'text' : 'password'} value={form.password} onChange={v => u('password', v)} placeholder="At least 8 characters"
                   error={errors.password}
                   suffix={
-                    <button type="button" onClick={() => setShowPass(!showPass)} style={{ background:'none', border:'none', cursor:'pointer', color:C.textMuted, display:'flex', alignItems:'center' }}>
+                    <button type="button" onClick={() => setShowPass(!showPass)}
+                      aria-label={showPass ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPass}
+                      style={{ width:44, height:44, margin:'0 -0.75rem', background:'none', border:'none', cursor:'pointer', color:C.textMuted, display:'flex', alignItems:'center', justifyContent:'center' }}>
                       {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   } />
@@ -309,7 +345,7 @@ export default function AuthPage() {
                     <div style={{ display:'flex', gap:'0.3rem', marginBottom:'0.4rem' }}>
                       {[1,2,3,4].map(i => {
                         const strength = form.password.length >= 12 ? 4 : form.password.length >= 10 ? 3 : form.password.length >= 8 ? 2 : 1
-                        return <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= strength ? (strength >= 4 ? C.green : strength >= 3 ? '#f5a623' : strength >= 2 ? C.coral : C.red) : 'rgba(191,192,192,0.1)', transition:'background 0.3s' }} />
+                        return <div key={i} style={{ flex:1, height:3, borderRadius:2, backgroundColor: i <= strength ? (strength >= 4 ? C.green : strength >= 3 ? '#f5a623' : strength >= 2 ? C.coral : C.red) : 'var(--surface-3)', transition:'background-color 0.3s' }} />
                       })}
                     </div>
                     <div style={{ fontFamily:D.body, fontSize:'0.72rem', color:C.textMuted }}>
@@ -344,7 +380,7 @@ export default function AuthPage() {
                   <StepDot n="1" active={false} done={true} />
                   <div style={{ flex:1, height:2, background:C.coral, borderRadius:1 }} />
                   <StepDot n="2" active={true} done={false} />
-                  <div style={{ flex:1, height:2, background:'rgba(191,192,192,0.1)', borderRadius:1 }} />
+                  <div style={{ flex:1, height:2, background:'var(--surface-3)', borderRadius:1 }} />
                   <StepDot n="3" active={false} done={false} />
                 </div>
                 <h2 style={{ fontFamily:D.display, fontSize:'2rem', fontWeight:700, color:C.text, lineHeight:1, marginBottom:'0.4rem', letterSpacing:'-0.02em' }}>Add your ride</h2>
@@ -357,7 +393,7 @@ export default function AuthPage() {
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
                   {[['car','🚗 Car'],['bike','🏍️ Bike']].map(([val, label]) => (
                     <button key={val} type="button" onClick={() => u('vehicleType', val)}
-                      style={{ padding:'0.85rem', borderRadius:12, background: form.vehicleType===val ? 'rgba(239,131,84,0.15)' : C.surface2, border:`1.5px solid ${form.vehicleType===val ? C.coral : C.border}`, cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.9rem', color: form.vehicleType===val ? C.coral : C.textMuted, transition:'all 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem' }}>
+                      style={{ padding:'0.85rem', borderRadius:12, backgroundColor: form.vehicleType===val ? C.accentBg : C.surface2, border:`1.5px solid ${form.vehicleType===val ? C.coral : C.border}`, cursor:'pointer', fontFamily:D.body, fontWeight:600, fontSize:'0.9rem', color: form.vehicleType===val ? C.coral : C.textMuted, transition:'background-color 0.2s, border-color 0.2s, color 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem' }}>
                       {label}
                     </button>
                   ))}
@@ -371,7 +407,7 @@ export default function AuthPage() {
               </div>
 
               {errors.general && (
-                <div style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, padding:'0.75rem 1rem', fontFamily:D.body, fontSize:'0.85rem', color:C.red }}>
+                <div style={{ background:C.dangerBg, border:`1px solid ${C.red}40`, borderRadius:10, padding:'0.75rem 1rem', fontFamily:D.body, fontSize:'0.85rem', color:C.red }}>
                   {errors.general}
                 </div>
               )}
@@ -417,7 +453,7 @@ export default function AuthPage() {
               </div>
 
               <button onClick={() => navigate('/app')}
-                style={{ width:'100%', padding:'0.95rem', background:C.coral, border:'none', borderRadius:12, color:'#fff', fontFamily:D.body, fontWeight:700, fontSize:'0.95rem', cursor:'pointer', transition:'background 0.2s' }}
+                style={{ width:'100%', padding:'0.95rem', backgroundColor:C.coralSolid, border:'none', borderRadius:12, color:'#fff', fontFamily:D.body, fontWeight:700, fontSize:'0.95rem', cursor:'pointer', transition:'background-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background=C.coralDim}
                 onMouseLeave={e => e.currentTarget.style.background=C.coral}>
                 Enter Your Garage →

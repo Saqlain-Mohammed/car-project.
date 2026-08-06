@@ -1,266 +1,310 @@
-import { useState, useRef, useEffect } from 'react'
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, X } from 'lucide-react'
-
-const C = { bg:'#0a0b10', surface:'#2a2f40', surface2:'#353b50', coral:'#EF8354', coralDim:'#d96a3a', text:'#EDEEF0', textSoft:'#BFC0C0', textMuted:'#8b90a0', border:'rgba(191,192,192,0.12)', green:'#5eaa7e' }
-const D = { display:"'Space Grotesk', sans-serif", body:"'Inter', sans-serif" }
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { MessageCircle, Share2, Volume2, VolumeX, ChevronUp, ChevronDown, Bookmark } from 'lucide-react'
+import { C, D, R, SHADOW, SERIES } from '../../../lib/theme'
+import { Avatar, Button, Badge, Divider, Input, FollowButton, SaveButton, LikeButton } from '../../ui/Primitives'
+import Modal, { ModalHeader } from '../../ui/Modal'
+import { useSavedIds } from '../../../hooks/useSocialActions'
 
 const REELS = [
-  { id:1, user:'TurboMike',  avatar:'T', color:'#f39c12', title:'K-Swap Cold Start 🔥',         views:'24K', likes:1200, comments:84,  duration:'0:32', tag:'Build', img:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=500&q=80',  tags:['#kseries','#honda','#build','#civic'] },
-  { id:2, user:'DriftQueen', avatar:'D', color:'#5eaa7e', title:'180SX Drift Entry',            views:'87K', likes:4800, comments:213, duration:'0:18', tag:'Drift', img:'https://images.unsplash.com/photo-1611859266238-4b98091d9d9b?w=500&q=80', tags:['#drift','#180sx','#smoke','#jdm'] },
-  { id:3, user:'RaiderKing', avatar:'R', color:'#EF8354', title:'Duke 390 Flyby Sound',        views:'12K', likes:890,  comments:42,  duration:'0:08', tag:'Moto',  img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80',  tags:['#ktm','#duke390','#exhaust','#moto'] },
-  { id:4, user:'ZeroShift',  avatar:'Z', color:'#3b82f6', title:'Track Day Onboard Lap',       views:'43K', likes:2100, comments:97,  duration:'1:42', tag:'Track', img:'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=500&q=80', tags:['#trackday','#onboard','#racecar','#lap'] },
-  { id:5, user:'NightRider', avatar:'N', color:'#a855f7', title:'Ghat Road Sunset Ride',       views:'61K', likes:3400, comments:158, duration:'0:45', tag:'Trip',  img:'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=500&q=80', tags:['#ride','#sunset','#ghatroad','#touring'] },
-  { id:6, user:'IronBlock',  avatar:'I', color:'#EF8354', title:'Turbo Spool Up Close',        views:'19K', likes:1100, comments:66,  duration:'0:12', tag:'Mod',   img:'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500&q=80', tags:['#turbo','#boost','#mod','#performance'] },
-  { id:7, user:'GhostLap',   avatar:'G', color:'#8b90a0', title:'Night Highway Run',           views:'33K', likes:1800, comments:79,  duration:'0:28', tag:'Vibes', img:'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500&q=80', tags:['#night','#highway','#vibes'] },
-  { id:8, user:'ApexHunter', avatar:'A', color:'#5eaa7e', title:'Heel-Toe Downshift',          views:'55K', likes:2900, comments:134, duration:'0:15', tag:'Skills',img:'https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=500&q=80',  tags:['#skills','#manual','#downshift','#driver'] },
+  { id:'r1', user:'TurboMike',  title:'K-swap cold start',     views:'24K', likes:1200, comments:84,  tag:'Build',  img:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=900&q=80', tags:['#kseries','#honda','#build'] },
+  { id:'r2', user:'DriftQueen', title:'180SX drift entry',     views:'87K', likes:4800, comments:213, tag:'Drift',  img:'https://images.unsplash.com/photo-1611859266238-4b98091d9d9b?w=900&q=80', tags:['#drift','#180sx','#jdm'] },
+  { id:'r3', user:'RaiderKing', title:'Duke 390 flyby',        views:'12K', likes:890,  comments:42,  tag:'Moto',   img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80', tags:['#ktm','#exhaust','#moto'] },
+  { id:'r4', user:'ZeroShift',  title:'Track day onboard lap', views:'43K', likes:2100, comments:97,  tag:'Track',  img:'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=900&q=80', tags:['#trackday','#onboard'] },
+  { id:'r5', user:'NightRider', title:'Ghat road at sunset',   views:'61K', likes:3400, comments:158, tag:'Trip',   img:'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=900&q=80', tags:['#ride','#sunset','#touring'] },
+  { id:'r6', user:'ApexHunter', title:'Heel-toe downshift',    views:'55K', likes:2900, comments:134, tag:'Skills', img:'https://images.unsplash.com/photo-1546614042-7df3c24c9e5d?w=900&q=80', tags:['#skills','#manual'] },
 ]
 
-const MOCK_COMMENTS = [
-  { id:1, user:'TurboMike', avatar:'T', color:'#f39c12', text:'Absolute beast build! 🔥', time:'2m' },
-  { id:2, user:'DriftQueen',avatar:'D', color:'#5eaa7e', text:'What tune is this running?', time:'5m' },
-  { id:3, user:'ZeroShift', avatar:'Z', color:'#3b82f6', text:'The sound is insane bro', time:'8m' },
-  { id:4, user:'NightRider',avatar:'N', color:'#a855f7', text:'Goals 🙌', time:'12m' },
-  { id:5, user:'ApexHunter',avatar:'A', color:'#5eaa7e', text:'Stage 2 or stage 3?', time:'18m' },
+const SEED_COMMENTS = [
+  { id:1, user:'TurboMike',  text:'Absolute beast of a build.',   time:'2m' },
+  { id:2, user:'DriftQueen', text:'What tune is this running?',   time:'5m' },
+  { id:3, user:'ZeroShift',  text:'The sound at 4:12 is unreal.', time:'8m' },
+  { id:4, user:'NightRider', text:'Goals.',                       time:'12m' },
 ]
-
-function fmtLikes(n) { return n >= 1000 ? (n/1000).toFixed(1)+'K' : n }
 
 export default function ReelsSection() {
-  const [activeIdx, setActiveIdx] = useState(0)
-  const [liked,      setLiked]      = useState({})
-  const [saved,      setSaved]      = useState({})
-  const [muted,      setMuted]      = useState(true)
-  const [comment,    setComment]    = useState('')
-  const [comments,   setComments]   = useState(MOCK_COMMENTS)
-  const [showSaved,  setShowSaved]  = useState(false)
-  const saveTimer = useRef(null)
-  const containerRef = useRef(null)
+  const [idx, setIdx]             = useState(0)
+  const [muted, setMuted]         = useState(true)
+  const [draft, setDraft]         = useState('')
+  const [comments, setComments]   = useState(SEED_COMMENTS)
+  const [savedOpen, setSavedOpen] = useState(false)
+  const stageRef = useRef(null)
+  const savedIds = useSavedIds('saves')
 
-  // Double-tap Save = show saved reels popup
-  const handleSaveClick = (id) => {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current)
-      saveTimer.current = null
-      setShowSaved(true) // double tap
-    } else {
-      setSaved(s => ({ ...s, [id]: !s[id] }))
-      saveTimer.current = setTimeout(() => { saveTimer.current = null }, 300)
-    }
-  }
-  const active = REELS[activeIdx]
-
-  // Scroll-wheel to change reel
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    let acc = 0
-    const handler = (e) => {
-      e.preventDefault()
-      acc += e.deltaY
-      if (acc > 60)  { setActiveIdx(i => Math.min(REELS.length - 1, i + 1)); acc = 0 }
-      if (acc < -60) { setActiveIdx(i => Math.max(0, i - 1)); acc = 0 }
-    }
-    el.addEventListener('wheel', handler, { passive: false })
-    return () => el.removeEventListener('wheel', handler)
+  const reel = REELS[idx]
+  const go = useCallback(dir => {
+    setIdx(i => Math.min(REELS.length - 1, Math.max(0, i + dir)))
   }, [])
 
-  const sendComment = () => {
-    if (!comment.trim()) return
-    setComments(c => [{ id: Date.now(), user:'You', avatar:'Y', color: C.coral, text: comment, time:'now' }, ...c])
-    setComment('')
+  // Wheel advances one reel per gesture; the accumulator stops a single
+  // trackpad flick from skipping several at once.
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    let acc = 0, lock = false
+    const onWheel = e => {
+      e.preventDefault()
+      if (lock) return
+      acc += e.deltaY
+      if (Math.abs(acc) > 50) {
+        go(acc > 0 ? 1 : -1)
+        acc = 0
+        lock = true
+        setTimeout(() => { lock = false }, 350)
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [go])
+
+  // Arrow / space navigation, ignored while typing a comment.
+  useEffect(() => {
+    const onKey = e => {
+      if (e.target.matches?.('input, textarea')) return
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); go(1) }
+      if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  { e.preventDefault(); go(-1) }
+      if (e.key === 'm' || e.key === 'M') setMuted(v => !v)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go])
+
+  // Warm the neighbouring frames so advancing never shows a blank stage.
+  useEffect(() => {
+    ;[idx - 1, idx + 1].forEach(i => {
+      const r = REELS[i]
+      if (r) { const img = new Image(); img.src = r.img }
+    })
+  }, [idx])
+
+  const send = () => {
+    if (!draft.trim()) return
+    setComments(c => [{ id: Date.now(), user:'You', text: draft, time:'now' }, ...c])
+    setDraft('')
   }
 
+  const savedReels = REELS.filter(r => savedIds.has(String(r.id)))
+
+  const railBtn = (Icon, label, onClick, extra) => (
+    <button onClick={onClick} aria-label={label} className="t-press"
+      style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.3rem', background:'none', border:'none', cursor:'pointer', padding:0 }}>
+      <span style={{
+        width:44, height:44, borderRadius:'50%',
+        background:'rgba(11,13,17,0.55)', backdropFilter:'blur(10px)',
+        boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.14)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+      }}>
+        <Icon size={18} color="#fff" />
+      </span>
+      <span style={{ fontFamily:D.body, fontSize:'0.66rem', fontWeight:600, color:'rgba(255,255,255,0.85)', fontVariantNumeric:'tabular-nums' }}>{extra}</span>
+    </button>
+  )
+
   return (
-    <>
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', height:'calc(100vh - 60px)', overflow:'hidden', background: C.bg }}>
+    <div className="tg-reels" style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) 360px', height:'calc(100vh - 60px)', overflow:'hidden', background:C.bg }}>
 
-      {/* ── LEFT: reel player ───────────────────────────── */}
-      <div ref={containerRef}
-        style={{ position:'relative', overflow:'hidden', cursor:'ns-resize', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      {/* ── Stage: the reel is a true 9:16 card, letterboxed like Shorts ── */}
+      <div ref={stageRef} className="tg-reels-stage"
+        style={{
+          position:'relative', overflow:'hidden', background:'#07080B',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:'1.25rem',
+        }}>
 
-        {/* Full-bleed background image */}
-        <img src={active.img} alt={active.title} key={active.id}
-          style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.6, transition:'opacity 0.4s' }} />
+        {/* Ambient wash of the current frame — fills the letterbox without
+            stretching the reel itself out of ratio. */}
+        <img key={`bg-${reel.id}`} src={reel.img} alt="" aria-hidden
+          style={{
+            position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
+            filter:'blur(48px) saturate(140%)', opacity:0.35, transform:'scale(1.15)', outline:'none',
+          }} />
+        <div style={{ position:'absolute', inset:0, background:'rgba(7,8,11,0.5)' }} />
 
-        {/* Gradients */}
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.35) 100%)' }} />
+        {/* The 9:16 frame */}
+        <div style={{
+          position:'relative', height:'100%', aspectRatio:'9 / 16', maxWidth:'100%',
+          borderRadius:R.xl, overflow:'hidden', boxShadow:SHADOW.lg, background:'#000',
+        }}>
+          <img key={reel.id} src={reel.img} alt={reel.title}
+            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', animation:'fadeIn 350ms cubic-bezier(0.22,1,0.36,1)' }} />
 
-        {/* Top bar: tag + mute */}
-        <div style={{ position:'absolute', top:16, left:0, right:0, display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0 20px', zIndex:3 }}>
-          <span style={{ fontFamily:D.body, fontSize:'0.65rem', fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', background:`${active.color}cc`, color:'#fff', padding:'0.22rem 0.65rem', borderRadius:6 }}>{active.tag}</span>
-          <button onClick={() => setMuted(m => !m)}
-            style={{ background:'rgba(0,0,0,0.5)', border:'none', borderRadius:8, width:36, height:36, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }}>
-            {muted ? <VolumeX size={16} color="#fff" /> : <Volume2 size={16} color="#fff" />}
+          {/* Legibility scrims */}
+          <div style={{ position:'absolute', inset:0, pointerEvents:'none',
+            background:'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 42%), linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 22%)' }} />
+
+          {/* Top bar */}
+          <div style={{ position:'absolute', top:14, left:14, right:14, display:'flex', justifyContent:'space-between', alignItems:'center', zIndex:3 }}>
+            <Badge tone="accent">{reel.tag}</Badge>
+            <button onClick={() => setMuted(m => !m)} aria-label={muted ? 'Unmute' : 'Mute'} className="t-press"
+              style={{
+                width:36, height:36, borderRadius:R.md, border:'none', cursor:'pointer',
+                background:'rgba(11,13,17,0.6)', backdropFilter:'blur(10px)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+              {muted ? <VolumeX size={15} color="#fff" /> : <Volume2 size={15} color="#fff" />}
+            </button>
+          </div>
+
+          {/* Action rail — inside the frame, like Reels/Shorts */}
+          <div style={{ position:'absolute', right:12, bottom:118, display:'flex', flexDirection:'column', gap:'1rem', alignItems:'center', zIndex:3 }}>
+            <div style={{ background:'rgba(11,13,17,0.55)', backdropFilter:'blur(10px)', borderRadius:R.full, boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.14)' }}>
+              <LikeButton postId={reel.id} count={reel.likes} />
+            </div>
+            {railBtn(MessageCircle, 'Comments', () => {}, reel.comments)}
+            {railBtn(Share2, 'Share', () => {}, 'Share')}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.3rem' }}>
+              <span style={{
+                width:44, height:44, borderRadius:'50%',
+                background:'rgba(11,13,17,0.55)', backdropFilter:'blur(10px)',
+                boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.14)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                <SaveButton postId={reel.id} size={44} />
+              </span>
+              <button onClick={() => setSavedOpen(true)}
+                style={{ fontFamily:D.body, fontSize:'0.66rem', fontWeight:600, color:'rgba(255,255,255,0.85)', background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                Saved
+              </button>
+            </div>
+          </div>
+
+          {/* Caption */}
+          <div style={{ position:'absolute', bottom:0, left:0, right:72, padding:'1.25rem 1.1rem', zIndex:3 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'0.55rem', marginBottom:'0.55rem' }}>
+              <Avatar name={reel.user} size={34} tone={SERIES[idx % SERIES.length]} />
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:D.body, fontSize:'0.875rem', fontWeight:600, color:'#fff' }}>@{reel.user}</div>
+                <div style={{ fontFamily:D.body, fontSize:'0.7rem', color:'rgba(255,255,255,0.6)' }}>{reel.views} views</div>
+              </div>
+              <FollowButton profileId={reel.user} />
+            </div>
+            <div style={{ fontFamily:D.body, fontSize:'0.875rem', fontWeight:500, color:'#fff', marginBottom:'0.35rem' }}>{reel.title}</div>
+            <div style={{ display:'flex', gap:'0.35rem', flexWrap:'wrap', marginBottom:'0.75rem' }}>
+              {reel.tags.map(t => <span key={t} style={{ fontFamily:D.body, fontSize:'0.74rem', color:'#9EC1FF' }}>{t}</span>)}
+            </div>
+            <div style={{ height:2, background:'rgba(255,255,255,0.2)', borderRadius:1, overflow:'hidden' }}>
+              <div style={{ height:'100%', width:'38%', background:C.accent, borderRadius:1 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Prev / next — outside the frame so they never cover content */}
+        {[
+          { Icon: ChevronUp,   dir: -1, pos: { top: 20 },    label: 'Previous reel', off: idx === 0 },
+          { Icon: ChevronDown, dir:  1, pos: { bottom: 20 }, label: 'Next reel',     off: idx === REELS.length - 1 },
+        ].map(({ Icon, dir, pos, label, off }) => (
+          <button key={label} onClick={() => go(dir)} disabled={off} aria-label={label} className="t-press"
+            style={{
+              position:'absolute', right:24, ...pos, width:38, height:38, borderRadius:'50%',
+              background:'rgba(255,255,255,0.08)', backdropFilter:'blur(10px)', border:'none',
+              display:'flex', alignItems:'center', justifyContent:'center', zIndex:4,
+              cursor: off ? 'default' : 'pointer', opacity: off ? 0.25 : 1,
+              transition:'opacity 250ms cubic-bezier(0.22,1,0.36,1), scale 150ms cubic-bezier(0.22,1,0.36,1)',
+            }}>
+            <Icon size={18} color="#fff" />
+          </button>
+        ))}
+
+        {/* Position rail */}
+        <div style={{ position:'absolute', left:14, top:'50%', translate:'0 -50%', display:'flex', flexDirection:'column', gap:5, zIndex:4 }}>
+          {REELS.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)} aria-label={`Reel ${i + 1}`}
+              style={{
+                width:3, height: i === idx ? 22 : 3, borderRadius:2, border:'none', padding:0, cursor:'pointer',
+                background: i === idx ? C.accent : 'rgba(255,255,255,0.3)',
+                transition:'height 250ms cubic-bezier(0.22,1,0.36,1), background-color 250ms cubic-bezier(0.22,1,0.36,1)',
+              }} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Side panel ── */}
+      <aside className="tg-reels-panel" style={{ background:C.surface, display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:`inset 1px 0 0 ${C.border}` }}>
+        <div style={{ padding:'1.15rem 1.25rem' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.85rem' }}>
+            <Avatar name={reel.user} size={44} tone={SERIES[idx % SERIES.length]} />
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontFamily:D.body, fontSize:'0.9rem', fontWeight:600, color:C.text }}>@{reel.user}</div>
+              <div style={{ fontFamily:D.body, fontSize:'0.74rem', color:C.textMuted }}>{reel.views} views</div>
+            </div>
+            <FollowButton profileId={reel.user} />
+          </div>
+          <div style={{ fontFamily:D.body, fontSize:'0.86rem', fontWeight:500, color:C.text, marginBottom:'0.55rem' }}>{reel.title}</div>
+          <div style={{ display:'flex', gap:'0.35rem', flexWrap:'wrap' }}>
+            {reel.tags.map(t => <Badge key={t} tone="accent">{t}</Badge>)}
+          </div>
+        </div>
+
+        <Divider />
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)' }}>
+          {[[reel.likes >= 1000 ? `${(reel.likes/1000).toFixed(1)}K` : reel.likes, 'Likes'], [reel.comments, 'Comments'], [reel.views, 'Views']].map(([v, l], i) => (
+            <div key={l} style={{ padding:'0.85rem', textAlign:'center', boxShadow: i < 2 ? `inset -1px 0 0 ${C.border}` : 'none' }}>
+              <div style={{ fontFamily:D.display, fontSize:'1.05rem', fontWeight:700, color:C.accent, fontVariantNumeric:'tabular-nums' }}>{v}</div>
+              <div style={{ fontFamily:D.body, fontSize:'0.68rem', color:C.textMuted, marginTop:'0.15rem' }}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <Divider />
+
+        <div style={{ padding:'0.85rem 1.25rem 0.5rem', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontFamily:D.body, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:C.textDim }}>Comments</span>
+          <button onClick={() => setSavedOpen(true)}
+            style={{ display:'flex', alignItems:'center', gap:'0.3rem', fontFamily:D.body, fontSize:'0.72rem', fontWeight:600, color:C.accent, background:'none', border:'none', cursor:'pointer', padding:0 }}>
+            <Bookmark size={12} /> Saved ({savedReels.length})
           </button>
         </div>
 
-        {/* Right-side action buttons — INSIDE the panel, absolute right edge */}
-        <div style={{ position:'absolute', right:16, bottom:140, display:'flex', flexDirection:'column', gap:'1.5rem', alignItems:'center', zIndex:3 }}>
-          {[
-            { Icon: Heart,        label: fmtLikes(active.likes + (liked[active.id] ? 1 : 0)), action: () => setLiked(l => ({ ...l, [active.id]: !l[active.id] })), active: liked[active.id], color:'#ef4444' },
-            { Icon: MessageCircle,label: active.comments, action: () => {}, active: false, color: C.coral },
-            { Icon: Share2,       label: 'Share', action: () => {}, active: false, color: C.textSoft },
-            { Icon: Bookmark,     label: 'Save',  action: () => handleSaveClick(active.id), active: saved[active.id], color: C.coral },
-          ].map(({ Icon, label, action, active: isAct, color }) => (
-            <button key={String(label)} onClick={action}
-              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'0.25rem', background:'none', border:'none', cursor:'pointer', padding:0 }}>
-              <div style={{ width:46, height:46, borderRadius:'50%', background: isAct ? `${color}28` : 'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(6px)', border: isAct ? `1px solid ${color}55` : '1px solid rgba(255,255,255,0.1)', transition:'all 0.2s' }}>
-                <Icon size={20} color={isAct ? color : '#fff'} fill={isAct ? color : 'none'} />
-              </div>
-              <span style={{ fontFamily:D.body, fontSize:'0.66rem', fontWeight:600, color:'rgba(255,255,255,0.85)' }}>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Bottom: user info + tags + progress */}
-        <div style={{ position:'absolute', bottom:0, left:0, right:70, padding:'1.5rem 1.25rem', zIndex:3 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'0.65rem', marginBottom:'0.55rem' }}>
-            <div style={{ width:38, height:38, borderRadius:'50%', background:active.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.85rem', color:'#fff', flexShrink:0, border:'2px solid rgba(255,255,255,0.25)' }}>{active.avatar}</div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontFamily:D.body, fontSize:'0.92rem', fontWeight:700, color:'#fff' }}>@{active.user}</div>
-              <div style={{ fontFamily:D.body, fontSize:'0.72rem', color:'rgba(255,255,255,0.6)' }}>{active.views} views</div>
-            </div>
-            <button style={{ background:'rgba(239,131,84,0.9)', border:'none', borderRadius:8, padding:'0.3rem 0.95rem', cursor:'pointer', fontFamily:D.body, fontWeight:700, fontSize:'0.75rem', color:'#fff' }}>Follow</button>
-          </div>
-          <div style={{ fontFamily:D.body, fontSize:'0.92rem', fontWeight:600, color:'#fff', marginBottom:'0.4rem' }}>{active.title}</div>
-          <div style={{ display:'flex', gap:'0.35rem', flexWrap:'wrap', marginBottom:'0.85rem' }}>
-            {active.tags.map(t => <span key={t} style={{ fontFamily:D.body, fontSize:'0.72rem', color:active.color }}>{t}</span>)}
-          </div>
-          {/* Progress bar */}
-          <div style={{ height:2, background:'rgba(255,255,255,0.18)', borderRadius:1 }}>
-            <div style={{ height:'100%', width:'35%', background:C.coral, borderRadius:1 }} />
-          </div>
-        </div>
-
-        {/* Scroll hint */}
-        <div style={{ position:'absolute', bottom:16, right:20, fontFamily:D.body, fontSize:'0.62rem', color:'rgba(255,255,255,0.4)', textAlign:'center', zIndex:2 }}>
-          scroll ↕
-        </div>
-
-        {/* Dot indicators — left side */}
-        <div style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', display:'flex', flexDirection:'column', gap:5, zIndex:3 }}>
-          {REELS.map((_, i) => (
-            <button key={i} onClick={() => setActiveIdx(i)}
-              style={{ width: i === activeIdx ? 4 : 3, height: i === activeIdx ? 22 : 3, borderRadius: i === activeIdx ? 2 : '50%', background: i === activeIdx ? C.coral : 'rgba(255,255,255,0.28)', border:'none', cursor:'pointer', padding:0, transition:'all 0.3s' }} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── RIGHT: uploader + comments panel ───────────── */}
-      <div style={{ background: C.surface, display:'flex', flexDirection:'column', borderLeft:`1px solid ${C.border}`, overflow:'hidden' }}>
-
-        {/* Uploader profile */}
-        <div style={{ padding:'1.25rem', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'0.85rem', marginBottom:'0.85rem' }}>
-            <div style={{ width:50, height:50, borderRadius:'50%', background:active.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'1.2rem', color:'#fff', flexShrink:0, border:`3px solid ${active.color}44` }}>{active.avatar}</div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontFamily:D.body, fontSize:'0.92rem', fontWeight:700, color:C.text }}>@{active.user}</div>
-              <div style={{ fontFamily:D.body, fontSize:'0.72rem', color:C.textMuted }}>{active.views} views · {active.duration}</div>
-            </div>
-            <button style={{ fontFamily:D.body, fontWeight:700, fontSize:'0.75rem', background:C.coral, color:'#fff', border:'none', borderRadius:8, padding:'0.4rem 0.9rem', cursor:'pointer' }}>Follow</button>
-          </div>
-          <div style={{ fontFamily:D.body, fontSize:'0.85rem', fontWeight:600, color:C.text, marginBottom:'0.45rem' }}>{active.title}</div>
-          <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
-            {active.tags.map(t => (
-              <span key={t} style={{ fontFamily:D.body, fontSize:'0.7rem', fontWeight:600, padding:'0.18rem 0.55rem', borderRadius:20, background:`${active.color}18`, color:active.color, border:`1px solid ${active.color}33` }}>{t}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
-          {[
-            [fmtLikes(active.likes + (liked[active.id] ? 1 : 0)), 'Likes'],
-            [active.comments, 'Comments'],
-            [active.views,    'Views'],
-          ].map(([val, label]) => (
-            <div key={label} style={{ padding:'0.75rem', textAlign:'center', borderRight:`1px solid ${C.border}` }}>
-              <div style={{ fontFamily:D.display, fontSize:'1.1rem', fontWeight:700, color:C.coral }}>{val}</div>
-              <div style={{ fontFamily:D.body, fontSize:'0.65rem', color:C.textMuted }}>{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Comments label */}
-        <div style={{ padding:'0.75rem 1.25rem', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
-          <div style={{ fontFamily:D.body, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:C.textMuted }}>Comments</div>
-        </div>
-
-        {/* Comments list */}
-        <div style={{ flex:1, overflowY:'auto', padding:'0.75rem 1.25rem', display:'flex', flexDirection:'column', gap:'0.85rem' }}>
+        <div style={{ flex:1, overflowY:'auto', padding:'0.5rem 1.25rem', display:'flex', flexDirection:'column', gap:'0.8rem' }}>
           {comments.map(c => (
             <div key={c.id} style={{ display:'flex', gap:'0.6rem', alignItems:'flex-start' }}>
-              <div style={{ width:28, height:28, borderRadius:'50%', background:c.color, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:D.display, fontWeight:700, fontSize:'0.68rem', color:'#fff', flexShrink:0 }}>{c.avatar}</div>
-              <div style={{ flex:1 }}>
-                <div style={{ background:C.surface2, borderRadius:12, borderBottomLeftRadius:4, padding:'0.55rem 0.85rem' }}>
-                  <span style={{ fontFamily:D.body, fontWeight:700, fontSize:'0.78rem', color:c.color }}>{c.user} </span>
-                  <span style={{ fontFamily:D.body, fontSize:'0.82rem', color:C.text }}>{c.text}</span>
+              <Avatar name={c.user} size={28} />
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ background:C.surface2, borderRadius:R.md, padding:'0.55rem 0.8rem' }}>
+                  <span style={{ fontFamily:D.body, fontWeight:600, fontSize:'0.775rem', color:C.text }}>{c.user} </span>
+                  <span style={{ fontFamily:D.body, fontSize:'0.82rem', color:C.textSoft }}>{c.text}</span>
                 </div>
-                <div style={{ fontFamily:D.body, fontSize:'0.62rem', color:C.textMuted, marginTop:'0.18rem', paddingLeft:'0.25rem' }}>{c.time}</div>
+                <div style={{ fontFamily:D.body, fontSize:'0.66rem', color:C.textDim, marginTop:'0.2rem', paddingLeft:'0.2rem' }}>{c.time}</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Comment input */}
-        <div style={{ padding:'0.85rem', borderTop:`1px solid ${C.border}`, display:'flex', gap:'0.5rem', flexShrink:0 }}>
-          <input value={comment} onChange={e => setComment(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendComment()}
-            placeholder="Add a comment..."
-            style={{ flex:1, background:C.surface2, border:`1px solid ${C.border}`, borderRadius:24, padding:'0.6rem 1rem', color:C.text, fontFamily:D.body, fontSize:'0.85rem', outline:'none' }}
-            onFocus={e => e.target.style.borderColor='rgba(239,131,84,0.4)'}
-            onBlur={e => e.target.style.borderColor=C.border} />
-          <button onClick={sendComment}
-            style={{ background:C.coral, border:'none', borderRadius:24, padding:'0.6rem 1.1rem', cursor:'pointer', fontFamily:D.body, fontWeight:700, fontSize:'0.82rem', color:'#fff', flexShrink:0 }}
-            onMouseEnter={e => e.currentTarget.style.background=C.coralDim}
-            onMouseLeave={e => e.currentTarget.style.background=C.coral}>Post</button>
+        <div style={{ padding:'0.85rem 1rem', display:'flex', gap:'0.5rem', boxShadow:`inset 0 1px 0 ${C.border}` }}>
+          <Input value={draft} onChange={e => setDraft(e.target.value)} placeholder="Add a comment…"
+            onKeyDown={e => e.key === 'Enter' && send()} />
+          <Button onClick={send} disabled={!draft.trim()}>Post</Button>
         </div>
-      </div>
-    </div>
-    {/* Saved Reels Popup */}
-    {showSaved && (
-      <div style={{ position:'fixed', inset:0, zIndex:700, display:'flex', alignItems:'flex-end', justifyContent:'center', padding:'1rem' }}>
-        <div style={{ position:'absolute', inset:0, background:'rgba(8,10,18,0.75)', backdropFilter:'blur(6px)' }} onClick={() => setShowSaved(false)} />
-        <div style={{ position:'relative', zIndex:1, background:'#2a2f40', border:'1px solid rgba(191,192,192,0.12)', borderRadius:'22px 22px 16px 16px', width:'100%', maxWidth:520, maxHeight:'70vh', overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 -16px 48px rgba(0,0,0,0.5)' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.25rem 1.5rem', borderBottom:'1px solid rgba(191,192,192,0.12)' }}>
-            <div>
-              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'1.1rem', fontWeight:700, color:'#EDEEF0' }}>Saved Reels</div>
-              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.72rem', color:'#8b90a0', marginTop:'0.1rem' }}>{Object.values(saved).filter(Boolean).length} saved</div>
+      </aside>
+
+      {/* Saved shelf */}
+      <Modal open={savedOpen} onClose={() => setSavedOpen(false)} width={520} labelledBy="saved-title">
+        <ModalHeader id="saved-title" title="Saved reels"
+          subtitle={`${savedReels.length} saved — tap any to jump back to it.`} />
+        <div style={{ padding:'0 1.75rem 1.75rem', overflowY:'auto' }}>
+          {savedReels.length === 0 ? (
+            <div style={{ padding:'2.5rem 1rem', textAlign:'center' }}>
+              <Bookmark size={24} color={C.textDim} style={{ marginBottom:'0.7rem' }} />
+              <div style={{ fontFamily:D.body, fontSize:'0.875rem', color:C.textDim }}>Nothing saved yet — tap the bookmark on any reel.</div>
             </div>
-            <button onClick={() => setShowSaved(false)} style={{ background:'#353b50', border:'1px solid rgba(191,192,192,0.12)', borderRadius:8, width:32, height:32, cursor:'pointer', color:'#8b90a0', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <X size={15} />
-            </button>
-          </div>
-          <div style={{ overflowY:'auto', padding:'1rem' }}>
-            {REELS.filter(r => saved[r.id]).length === 0 ? (
-              <div style={{ textAlign:'center', padding:'2.5rem 1rem' }}>
-                <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🔖</div>
-                <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.9rem', color:'#8b90a0' }}>No saved reels yet. Tap Save on any reel.</div>
-              </div>
-            ) : (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                {REELS.filter(r => saved[r.id]).map(r => (
-                  <div key={r.id} onClick={() => { setActiveIdx(REELS.findIndex(x=>x.id===r.id)); setShowSaved(false) }}
-                    style={{ borderRadius:14, overflow:'hidden', border:'1px solid rgba(191,192,192,0.12)', cursor:'pointer', position:'relative' }}>
-                    <div style={{ height:110, overflow:'hidden' }}>
-                      <img src={r.img} alt={r.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                      <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%)' }} />
-                    </div>
-                    <div style={{ padding:'0.65rem 0.75rem' }}>
-                      <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.8rem', fontWeight:600, color:'#EDEEF0', marginBottom:'0.2rem' }}>{r.title}</div>
-                      <div style={{ fontFamily:"'Inter',sans-serif", fontSize:'0.68rem', color:'#8b90a0' }}>@{r.user} · {r.views} views</div>
-                    </div>
-                    <button onClick={e=>{e.stopPropagation();setSaved(s=>({...s,[r.id]:false}))}}
-                      style={{ position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.55)', border:'none', borderRadius:6, width:26, height:26, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <X size={12} color="#fff" />
-                    </button>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.7rem' }}>
+              {savedReels.map(r => (
+                <button key={r.id} onClick={() => { setIdx(REELS.findIndex(x => x.id === r.id)); setSavedOpen(false) }}
+                  className="t-lift t-zoom"
+                  style={{ borderRadius:R.md, overflow:'hidden', border:'none', padding:0, cursor:'pointer', background:C.surface2, textAlign:'left' }}>
+                  <div style={{ aspectRatio:'9 / 16', maxHeight:150, overflow:'hidden' }}>
+                    <img src={r.img} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div style={{ padding:'0.6rem 0.7rem' }}>
+                    <div style={{ fontFamily:D.body, fontSize:'0.79rem', fontWeight:600, color:C.text }}>{r.title}</div>
+                    <div style={{ fontFamily:D.body, fontSize:'0.68rem', color:C.textMuted, marginTop:'0.15rem' }}>@{r.user}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-    )}
-    </>
+      </Modal>
+    </div>
   )
 }

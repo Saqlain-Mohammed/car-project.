@@ -5,18 +5,19 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/ui/ErrorBoundary.jsx'
+import { isSupabaseConfigured } from './lib/supabase.js'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:        1000 * 60 * 2,   // 2 min — data stays fresh
-      gcTime:           1000 * 60 * 10,  // 10 min — keep in cache
-      retry:            2,
+      staleTime: 1000 * 60 * 2,   // 2 min — data stays fresh
+      gcTime:    1000 * 60 * 10,  // 10 min — keep in cache
+      // Without a backend every query is guaranteed to fail; retrying just
+      // triples the console noise before the same seeded fallback renders.
+      retry: isSupabaseConfigured ? 2 : 0,
       refetchOnWindowFocus: false,
     },
-    mutations: {
-      retry: 1,
-    },
+    mutations: { retry: isSupabaseConfigured ? 1 : 0 },
   },
 })
 
@@ -25,18 +26,21 @@ createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <App />
+        {/* Toasts read the theme variables so they follow light/dark. */}
         <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#2a2f40',
-              color: '#EDEEF0',
-              border: '1px solid rgba(191,192,192,0.18)',
+              background: 'var(--surface-2)',
+              color: 'var(--text)',
+              border: '1px solid var(--border-mid)',
+              boxShadow: 'var(--shadow-lg)',
+              borderRadius: '12px',
               fontFamily: "'Inter', sans-serif",
               fontSize: '0.875rem',
             },
-            success: { iconTheme: { primary: '#5eaa7e', secondary: '#2a2f40' } },
-            error:   { iconTheme: { primary: '#ef4444', secondary: '#2a2f40' } },
+            success: { iconTheme: { primary: 'var(--success)', secondary: 'var(--surface-2)' } },
+            error:   { iconTheme: { primary: 'var(--danger)',  secondary: 'var(--surface-2)' } },
           }}
         />
       </QueryClientProvider>

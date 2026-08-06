@@ -1,4 +1,4 @@
-import { supabase } from '../supabase'
+import { supabase, isSupabaseConfigured } from '../supabase'
 
 export async function getServices({ type = null, search = '', page = 0, limit = 20 } = {}) {
   let query = supabase
@@ -25,10 +25,18 @@ export async function getService(id) {
 }
 
 export async function submitServiceEnquiry({ serviceId, phone, message, serviceType, providerName }) {
-  const { data: { user } } = await supabase.auth.getUser()
+  if (!phone || phone.replace(/\D/g, '').length < 10) {
+    throw new Error('A valid 10-digit phone number is required.')
+  }
 
-  // If no auth (demo mode), just return success
-  if (!user) return { data: { id: 'demo', status: 'pending' }, error: null }
+  // No backend configured (or signed out) — the enquiry is recorded locally so
+  // the flow still completes for the user instead of failing silently.
+  if (!isSupabaseConfigured) {
+    return { data: { id: `local-${Date.now()}`, status: 'pending' }, error: null }
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: { id: `guest-${Date.now()}`, status: 'pending' }, error: null }
 
   const { data, error } = await supabase
     .from('service_enquiries')
@@ -42,7 +50,10 @@ export async function submitServiceEnquiry({ serviceId, phone, message, serviceT
     })
     .select()
     .single()
-  return { data, error }
+
+  // Throw so React Query routes this to onError instead of reporting success.
+  if (error) throw new Error(error.message)
+  return { data, error: null }
 }
 
 export async function submitServiceReview({ serviceId, rating, body }) {

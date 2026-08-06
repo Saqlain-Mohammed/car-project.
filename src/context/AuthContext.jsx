@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
@@ -16,66 +17,81 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const hasSupabase = import.meta.env.VITE_SUPABASE_URL &&
-      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url'
 
-    if (!hasSupabase) {
+    if (!isSupabaseConfigured) {
       const saved = localStorage.getItem('demo_user')
       if (saved) setUser(JSON.parse(saved))
       setLoading(false)
       return
     }
 
-    import('../lib/supabase').then(({ supabase }) => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
-      supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null)
-      })
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
     })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setUser(session?.user ?? null)
+    )
+    return () => subscription.unsubscribe()
   }, [])
 
+  /**
+   * supabase-js surfaces a dead endpoint as the browser's raw "Failed to
+   * fetch", which reads like the user mistyped something. Anything that never
+   * reached the server is a connection problem, so say that instead.
+   */
+  const explain = (result) => {
+    const msg = result?.error?.message || ''
+    if (/failed to fetch|network ?error|load failed/i.test(msg)) {
+      return { ...result, error: { ...result.error, message:
+        "Can't reach the server. Check your connection — if it persists, the backend may be unavailable." } }
+    }
+    return result
+  }
+
   const signIn = async (email, password) => {
-    const hasSupabase = import.meta.env.VITE_SUPABASE_URL &&
-      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url'
-    if (!hasSupabase) {
+    if (!isSupabaseConfigured) {
       const u = { ...DEMO_USER, email }
       setUser(u)
       localStorage.setItem('demo_user', JSON.stringify(u))
       return { data: u, error: null }
     }
-    const { supabase } = await import('../lib/supabase')
-    return supabase.auth.signInWithPassword({ email, password })
+    return explain(await supabase.auth.signInWithPassword({ email, password }))
   }
 
   const signUp = async (email, password, username, vehicle) => {
-    const hasSupabase = import.meta.env.VITE_SUPABASE_URL &&
-      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url'
-    if (!hasSupabase) {
+    if (!isSupabaseConfigured) {
       const u = { ...DEMO_USER, email, user_metadata: { username, vehicle } }
       setUser(u)
       localStorage.setItem('demo_user', JSON.stringify(u))
       return { data: u, error: null }
     }
-    const { supabase } = await import('../lib/supabase')
-    return supabase.auth.signUp({ email, password, options: { data: { username, vehicle } } })
+    return explain(await supabase.auth.signUp({ email, password, options: { data: { username, vehicle } } }))
   }
 
   const signOut = async () => {
     localStorage.removeItem('demo_user')
     setUser(null)
-    const hasSupabase = import.meta.env.VITE_SUPABASE_URL &&
-      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url'
-    if (hasSupabase) {
-      const { supabase } = await import('../lib/supabase')
-      await supabase.auth.signOut()
+    if (isSupabaseConfigured) {
+        await supabase.auth.signOut()
     }
   }
 
+  /**
+   * Sends the reset link. Supabase redirects back to `/auth`, where the
+   * recovery session lets the user set a new password.
+   */
+  const resetPassword = async (email) => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Password reset needs a backend connection.' } }
+    }
+    return explain(await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`,
+    }))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   )
