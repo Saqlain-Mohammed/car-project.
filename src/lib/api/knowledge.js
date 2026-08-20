@@ -56,8 +56,10 @@ export async function getMaintenanceGuide(id) {
     .single()
 
   if (!error && data) {
-    // Increment view count silently
-    await supabase.from('maintenance_guides').update({ view_count: (data.view_count || 0) + 1 }).eq('id', id).catch(() => {})
+    // Fire-and-forget. Goes through an RPC so the client needs no UPDATE grant
+    // on published guides, and so concurrent readers can't clobber each other
+    // the way a read-then-write round trip does.
+    supabase.rpc('increment_guide_views', { guide_id: id }).then(() => {}, () => {})
   }
   return { data, error }
 }
@@ -84,7 +86,7 @@ export async function getNewsArticle(slug) {
     .single()
 
   if (!error && data) {
-    await supabase.from('news_articles').update({ view_count: (data.view_count || 0) + 1 }).eq('id', data.id).catch(() => {})
+    supabase.rpc('increment_article_views', { article_id: data.id }).then(() => {}, () => {})
   }
   return { data, error }
 }

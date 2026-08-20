@@ -9,7 +9,7 @@ export async function getServices({ type = null, search = '', page = 0, limit = 
     .range(page * limit, (page + 1) * limit - 1)
 
   if (type)   query = query.eq('service_type', type)
-  if (search) query = query.ilike('title', `%${search}%`)
+  if (search) query = query.ilike('name', `%${search}%`)
 
   const { data, error } = await query
   return { data: data ?? [], error }
@@ -66,17 +66,5 @@ export async function submitServiceReview({ serviceId, rating, body }) {
     .select()
     .single()
 
-  if (!error) {
-    // Update avg rating
-    const { data: reviews } = await supabase
-      .from('service_reviews')
-      .select('rating')
-      .eq('service_id', serviceId)
-
-    if (reviews?.length) {
-      const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-      await supabase.from('services').update({ rating: Math.round(avg * 10) / 10, review_count: reviews.length }).eq('id', serviceId)
-    }
-  }
   return { data, error }
 }

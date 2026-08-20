@@ -66,7 +66,29 @@ export function AuthProvider({ children }) {
       localStorage.setItem('demo_user', JSON.stringify(u))
       return { data: u, error: null }
     }
-    return explain(await supabase.auth.signUp({ email, password, options: { data: { username, vehicle } } }))
+
+    const result = await explain(
+      await supabase.auth.signUp({ email, password, options: { data: { username, vehicle } } })
+    )
+
+    // `vehicle` also rides along as auth metadata (line above) purely as a
+    // record of what the signup form collected. The row the rest of the app
+    // actually reads — garage, vehicle timeline, mods — is this one. Projects
+    // with email confirmation on won't have a session yet; that user's first
+    // car just won't appear until they confirm and add it from the garage.
+    if (!result.error && result.data?.session && vehicle?.make && vehicle?.model) {
+      const { error: vehicleError } = await supabase.from('vehicles').insert({
+        owner_id: result.data.user.id,
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year ? Number(vehicle.year) : null,
+        type: vehicle.type || 'car',
+        is_primary: true,
+      })
+      if (vehicleError) console.error('Signup vehicle insert failed:', vehicleError.message)
+    }
+
+    return result
   }
 
   const signOut = async () => {
