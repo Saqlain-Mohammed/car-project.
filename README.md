@@ -294,6 +294,5 @@ Usually means the running dev server started before `.env.local` was corrected. 
 - [Lucide](https://lucide.dev/) — icon set
 - [TanStack Query](https://tanstack.com/query/latest) — server-state management
 
-## Contact
 
-<YOUR_CONTACT_INFO>
+
